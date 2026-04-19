@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Intentionally invalid: missing mandatory elements, unclosed tags -->
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <!-- Missing: CustomizationID, ProfileID, IssueDate, InvoiceTypeCode,
+       DocumentCurrencyCode, AccountingSupplierParty, AccountingCustomerParty,
+       TaxTotal, LegalMonetaryTotal, InvoiceLine -->
+  <cbc:ID>BAD-INVOICE</cbc:ID>
+</Invoice>

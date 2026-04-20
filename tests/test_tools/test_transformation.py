@@ -22,7 +22,7 @@ async def test_produces_well_formed_xml(minimal_invoice_data: dict) -> None:
 
 @pytest.mark.asyncio
 async def test_warns_when_customer_vat_absent(minimal_invoice_data: dict) -> None:
-    data = {**minimal_invoice_data, "customer": {**minimal_invoice_data["customer"], "tax_id": None}}
+    data = {**minimal_invoice_data, "buyer": {**minimal_invoice_data["buyer"], "tax_id": None}}
     result = await transform_to_ubl(data=data)
     assert any("VAT" in w for w in result["warnings"])
 

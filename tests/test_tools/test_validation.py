@@ -12,7 +12,7 @@ async def test_rejects_malformed_xml(invalid_xml: str) -> None:
     result = await _val.validate_invoice_be(xml=invalid_xml, profile="peppol-bis-3")
     assert result["valid"] is False
     assert result["errors"]
-    assert any(m["rule_id"] == "XML-PARSE" for m in result["errors"])
+    assert any("XML-PARSE" in str(m) for m in result["errors"])
 
 
 @pytest.mark.asyncio

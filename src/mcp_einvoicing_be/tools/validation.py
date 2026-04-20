@@ -1,9 +1,13 @@
-"""Belgian invoice validation — subclasses DocumentValidator from mcp-einvoicing-core."""
+"""Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core."""
 
 from typing import Annotated, Literal
 
-from mcp_einvoicing_core import DocumentValidator, ValidationError, format_error
-from mcp_einvoicing_core import DocumentValidationResult
+from mcp_einvoicing_core import (
+    BaseDocumentValidator,
+    DocumentValidationResult,
+    ValidationError,
+    format_error,
+)
 
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
@@ -19,43 +23,51 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
-class BEDocumentValidator(DocumentValidator):
+class BEDocumentValidator(BaseDocumentValidator):
     """Belgian document validator.
 
-    Subclasses ``DocumentValidator`` and implements ``validate()`` for UBL 2.1
-    documents against the three Belgian profiles. Tools are exposed as instance
-    methods so they can be registered on ``EInvoicingMCPServer`` via
-    ``server.tool()(validator.validate_invoice_be)``.
+    Subclasses ``BaseDocumentValidator`` and implements ``validate()`` for UBL 2.1
+    documents against the three Belgian profiles.
     """
 
-    async def validate(self, xml: str, profile: str = "peppol-bis-3") -> DocumentValidationResult:
-        """Core validation logic — called by the public tool methods."""
+    def get_schema_version(self) -> str:
+        return "Peppol BIS 3.0 / EN16931"
+
+    def validate(self, document_content: str | bytes) -> DocumentValidationResult:  # type: ignore[override]
+        return self._validate_with_profile(
+            document_content if isinstance(document_content, str) else document_content.decode(),
+            profile="peppol-bis-3",
+        )
+
+    def _validate_with_profile(self, xml: str, profile: str) -> DocumentValidationResult:
+        """Core validation logic."""
         root, parse_error = parse_ubl_xml(xml)
         if parse_error:
             return DocumentValidationResult(
                 valid=False,
-                profile=profile,
-                errors=[{"rule_id": "XML-PARSE", "message": parse_error, "severity": "error"}],
+                errors=[f"XML-PARSE: {parse_error}"],
                 warnings=[],
+                metadata={"profile": profile},
             )
 
         rules = _PROFILE_RULES.get(profile, PEPPOL_BIS3_RULES)
-        errors: list[dict[str, str]] = []
-        warnings: list[dict[str, str]] = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         for rule in rules:
             violation = self._evaluate_rule(root, rule)
             if violation:
+                msg = f"{rule.get('rule_id', 'RULE')}: {violation}"
                 if rule["severity"] == "error":
-                    errors.append(violation)
+                    errors.append(msg)
                 else:
-                    warnings.append(violation)
+                    warnings.append(msg)
 
         return DocumentValidationResult(
             valid=len(errors) == 0,
-            profile=profile,
             errors=errors,
             warnings=warnings,
+            metadata={"profile": profile},
         )
 
     async def validate_invoice_be(
@@ -73,16 +85,17 @@ class BEDocumentValidator(DocumentValidator):
         Returns a structured result with per-rule error and warning messages.
         """
         try:
-            result = await self.validate(xml, profile)
-            return result.model_dump()
+            result = self._validate_with_profile(xml, profile)
+            return result.to_dict()
         except ValidationError as exc:
-            return {"valid": False, "profile": profile, "errors": [format_error(exc)], "warnings": []}
+            return {"valid": False, "profile": profile, "errors": [format_error(exc)], "warnings": []}  # noqa: E501
 
     async def validate_pint_be(
         self,
         xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
     ) -> dict[str, object]:
-        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium (NBB).
+        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium
+        (NBB).
 
         PINT-BE is the Belgian PINT (Peppol International) extension that adds
         country-specific mandatory elements on top of EN 16931. Rule IDs follow
@@ -94,12 +107,11 @@ class BEDocumentValidator(DocumentValidator):
         self,
         root: object,
         rule: dict[str, str],
-    ) -> dict[str, str] | None:
+    ) -> str | None:
         """Evaluate a single XPath-based business rule against a parsed XML tree.
 
-        Returns a violation dict if the rule fails, None if it passes.
+        Returns a violation message if the rule fails, None if it passes.
         Delegates to the core Schematron engine when available; stubs pass
         during scaffolding.
         """
-        # Delegate to core schematron engine via super() once integrated.
         return None

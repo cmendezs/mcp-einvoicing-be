@@ -1,7 +1,9 @@
 """Belgian party models — extend mcp-einvoicing-core base types."""
 
-from pydantic import Field
-from mcp_einvoicing_core import InvoiceParty, PartyAddress
+from typing import Any
+
+from mcp_einvoicing_core import InvoiceParty, PartyAddress, TaxIdentifier
+from pydantic import Field, field_validator
 
 
 class BEAddress(PartyAddress):
@@ -20,6 +22,7 @@ class BEParty(InvoiceParty):
     on top of the core ``InvoiceParty``.
     """
 
+    tax_id: TaxIdentifier | None = Field(default=None)  # type: ignore[assignment]
     peppol_id: str | None = Field(
         default=None,
         description="Peppol participant ID, e.g. '0208:0123456789'",
@@ -28,6 +31,14 @@ class BEParty(InvoiceParty):
         default="0208",
         description="Peppol ICD scheme for Belgium (KBO/BCE = 0208)",
     )
+
+    @field_validator("tax_id", mode="before")
+    @classmethod
+    def coerce_tax_id(cls, v: Any) -> Any:
+        """Accept 'BE0123456789' string shorthand in addition to TaxIdentifier dict/object."""
+        if isinstance(v, str) and len(v) >= 2 and v[:2].isalpha():
+            return {"country_code": v[:2].upper(), "identifier": v[2:]}
+        return v
 
 
 class Supplier(BEParty):

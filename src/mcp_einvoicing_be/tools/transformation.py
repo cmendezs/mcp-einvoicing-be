@@ -28,14 +28,12 @@ async def transform_to_ubl(
     invoice = BEInvoice.model_validate(data)
     warnings: list[str] = []
 
-    if not getattr(invoice.customer, "tax_id", None) and not getattr(
-        invoice.customer, "vat_number", None
-    ):
+    if not getattr(invoice.buyer, "tax_id", None):
         warnings.append(
             "Customer VAT number is absent — acceptable for B2C but required for most B2B profiles."
         )
 
-    terms = invoice.payment_terms
+    terms = invoice.payment
     if invoice.payment_means_code == "30":
         iban = getattr(terms, "iban", None) if terms else None
         if not iban:

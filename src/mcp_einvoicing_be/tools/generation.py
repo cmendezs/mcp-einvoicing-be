@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any, Literal
 
-from mcp_einvoicing_core import DocumentGenerator, DocumentGenerationError, format_error
+from mcp_einvoicing_core import BaseDocumentGenerator, DocumentGenerationError
 
 from mcp_einvoicing_be.models.invoice import BEInvoice
 from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
@@ -11,7 +11,7 @@ from mcp_einvoicing_be.standards.ubl import UBL_NAMESPACES, render_ubl_invoice
 ProfileLiteral = Literal["peppol-bis-3", "pint-be"]
 
 
-class BEDocumentGenerator(DocumentGenerator):
+class BEDocumentGenerator(BaseDocumentGenerator):
     """Belgian UBL 2.1 document generator.
 
     Subclasses ``DocumentGenerator`` and implements ``generate()`` for the
@@ -19,7 +19,13 @@ class BEDocumentGenerator(DocumentGenerator):
     methods so they can be registered on ``EInvoicingMCPServer``.
     """
 
-    async def generate(self, invoice: BEInvoice) -> str:  # type: ignore[override]
+    def get_format_name(self) -> str:
+        return "UBL-2.1"
+
+    def get_country_code(self) -> str:
+        return "BE"
+
+    def generate(self, invoice: BEInvoice) -> str:  # type: ignore[override]
         """Serialize a ``BEInvoice`` to a UBL 2.1 XML string."""
         return render_ubl_invoice(
             invoice=invoice,
@@ -49,8 +55,8 @@ class BEDocumentGenerator(DocumentGenerator):
         """
         try:
             invoice = BEInvoice.model_validate({**invoice_data, "profile": profile})
-            xml_string = await self.generate(invoice)
-        except DocumentGenerationError as exc:
+            xml_string = self.generate(invoice)
+        except DocumentGenerationError:
             raise
         except Exception as exc:
             raise DocumentGenerationError(str(exc)) from exc

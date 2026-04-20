@@ -26,7 +26,7 @@ async def test_generate_is_well_formed_xml(minimal_invoice_data: dict) -> None:
 
 @pytest.mark.asyncio
 async def test_generate_peppol_customization_id(minimal_invoice_data: dict) -> None:
-    result = await _gen.generate_invoice_be(invoice_data=minimal_invoice_data, profile="peppol-bis-3")
+    result = await _gen.generate_invoice_be(invoice_data=minimal_invoice_data, profile="peppol-bis-3")  # noqa: E501
     assert result["customization_id"] == CUSTOMIZATION_IDS["peppol-bis-3"]
     assert result["profile_id"] == PROFILE_IDS["peppol-bis-3"]
 

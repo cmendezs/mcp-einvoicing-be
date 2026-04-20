@@ -3,7 +3,7 @@
 import os
 from typing import Annotated
 
-from mcp_einvoicing_core import AuthMode, BaseEInvoicingClient, OAuthConfig, PlatformError
+from mcp_einvoicing_core import AuthMode, BaseEInvoicingClient, PlatformError
 
 from mcp_einvoicing_be.standards.peppol_bis_3 import INVOICE_TYPES
 from mcp_einvoicing_be.utils.helpers import normalize_vat_be
@@ -58,7 +58,7 @@ async def lookup_vat_be(
             data: dict[str, object] = await client.get(f"/enterprises/{digits}")
         except PlatformError as exc:
             if exc.status_code == 404:
-                return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}
+                return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}  # noqa: E501
             raise
 
     return {

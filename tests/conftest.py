@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -13,10 +12,10 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 @pytest.fixture
 def minimal_invoice_data() -> dict:
     return {
-        "invoice_number": "TEST-2024-001",
-        "issue_date": date(2024, 1, 15).isoformat(),
-        "currency_code": "EUR",
-        "supplier": {
+        "number": "TEST-2024-001",
+        "date": "2024-01-15",
+        "currency": "EUR",
+        "seller": {
             "name": "Acme NV",
             "tax_id": "BE0123456789",
             "address": {
@@ -26,7 +25,7 @@ def minimal_invoice_data() -> dict:
                 "country_code": "BE",
             },
         },
-        "customer": {
+        "buyer": {
             "name": "Client SPRL",
             "tax_id": "BE0987654321",
             "address": {
@@ -52,9 +51,9 @@ def minimal_invoice_data_with_payment(minimal_invoice_data: dict) -> dict:
     return {
         **minimal_invoice_data,
         "payment_means_code": "30",
-        "payment_terms": {
+        "payment": {
             "iban": "BE68539007547034",
-            "bic": "NICA BE BB",
+            "bic": "NICABEBB",
             "ogm_reference": "+++000/0000/00097+++",
         },
     }

@@ -3,13 +3,36 @@
 import os
 from typing import Annotated
 
-import httpx
+from mcp_einvoicing_core import AuthMode, BaseEInvoicingClient, OAuthConfig, PlatformError
 
 from mcp_einvoicing_be.standards.peppol_bis_3 import INVOICE_TYPES
 from mcp_einvoicing_be.utils.helpers import normalize_vat_be
 
 _BCE_API_BASE = "https://api.kbo-bce.be/v1"
 _PEPPOL_SML_BASE = "https://edelivery.tech.ec.europa.eu/edelivery-smp"
+
+
+def _bce_client() -> BaseEInvoicingClient:
+    """Build an authenticated BCE/KBO API client.
+
+    Uses API_KEY auth when ``BCE_API_KEY`` is set, falling back to NONE (public
+    endpoints) when the key is absent — the BCE public REST API does not require
+    authentication for basic enterprise lookups.
+    """
+    api_key = os.environ.get("BCE_API_KEY", "")
+    return BaseEInvoicingClient(
+        base_url=_BCE_API_BASE,
+        auth_mode=AuthMode.API_KEY if api_key else AuthMode.NONE,
+        api_key=api_key or None,
+    )
+
+
+def _peppol_client() -> BaseEInvoicingClient:
+    """Build an unauthenticated Peppol SMP/SML lookup client."""
+    return BaseEInvoicingClient(
+        base_url=_PEPPOL_SML_BASE,
+        auth_mode=AuthMode.NONE,
+    )
 
 
 async def lookup_vat_be(
@@ -24,22 +47,19 @@ async def lookup_vat_be(
     dots/spaces. Returns the enterprise's legal name, registered address,
     legal form, status, and NACE activity codes.
 
-    Requires the ``BCE_API_KEY`` environment variable.
+    Optionally set the ``BCE_API_KEY`` environment variable for authenticated
+    access to the full BCE dataset.
     """
     normalized = normalize_vat_be(vat_number)
-    api_key = os.environ.get("BCE_API_KEY", "")
+    digits = normalized[2:]  # strip 'BE' for the path segment
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(
-            f"{_BCE_API_BASE}/enterprises/{normalized}",
-            headers={"Authorization": f"Bearer {api_key}"} if api_key else {},
-        )
-
-    if response.status_code == 404:
-        return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}
-
-    response.raise_for_status()
-    data: dict[str, object] = response.json()
+    async with _bce_client() as client:
+        try:
+            data: dict[str, object] = await client.get(f"/enterprises/{digits}")
+        except PlatformError as exc:
+            if exc.status_code == 404:
+                return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}
+            raise
 
     return {
         "found": True,
@@ -56,7 +76,7 @@ async def lookup_vat_be(
 async def check_peppol_participant_be(
     identifier: Annotated[
         str,
-        "Peppol participant ID (e.g. '0088:BE0123456789') or plain Belgian VAT number",
+        "Peppol participant ID (e.g. '0208:0123456789') or plain Belgian VAT number",
     ],
 ) -> dict[str, object]:
     """Check whether a Belgian company is registered as a Peppol participant.
@@ -68,31 +88,30 @@ async def check_peppol_participant_be(
     SMP access point endpoint URL.
     """
     if ":" not in identifier:
-        normalized = normalize_vat_be(identifier).lstrip("BE")
-        participant_id = f"0208:{normalized}"
+        digits = normalize_vat_be(identifier)[2:]  # strip 'BE'
+        participant_id = f"0208:{digits}"
     else:
         participant_id = identifier
 
     scheme, value = participant_id.split(":", 1)
-    smp_url = f"{_PEPPOL_SML_BASE}/iso6523-actorid-upis::{scheme}:{value}"
+    path = f"/iso6523-actorid-upis::{scheme}:{value}"
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(smp_url, follow_redirects=True)
-
-    if response.status_code == 404:
-        return {
-            "registered": False,
-            "participant_id": participant_id,
-            "error": "Participant not found on Peppol network",
-        }
-
-    response.raise_for_status()
+    async with _peppol_client() as client:
+        try:
+            raw: str = await client.get_raw(path, follow_redirects=True)
+        except PlatformError as exc:
+            if exc.status_code == 404:
+                return {
+                    "registered": False,
+                    "participant_id": participant_id,
+                    "error": "Participant not found on Peppol network",
+                }
+            raise
 
     return {
         "registered": True,
         "participant_id": participant_id,
-        "smp_url": str(response.url),
-        "raw": response.text,
+        "raw": raw,
     }
 
 

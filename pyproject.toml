@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-einvoicing-be"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-BE, Mercurius)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -62,6 +62,9 @@ Changelog = "https://github.com/cmendezs/mcp-einvoicing-be/blob/main/CHANGELOG.m
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_einvoicing_be"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["mcp-publisher", "dist/", ".github/"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

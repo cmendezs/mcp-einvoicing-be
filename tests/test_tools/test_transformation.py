@@ -1,52 +1,40 @@
 """Tests for the transform_to_ubl tool."""
 
-import pytest
 from xml.etree.ElementTree import fromstring
+
+import pytest
 
 from mcp_einvoicing_be.tools.transformation import transform_to_ubl
 
 
 @pytest.mark.asyncio
-async def test_transform_to_ubl_returns_xml(minimal_invoice_data: dict) -> None:
+async def test_returns_xml_string(minimal_invoice_data: dict) -> None:
     result = await transform_to_ubl(data=minimal_invoice_data)
-    assert "xml" in result
     assert isinstance(result["xml"], str)
     assert len(result["xml"]) > 0
 
 
 @pytest.mark.asyncio
-async def test_transform_to_ubl_is_well_formed(minimal_invoice_data: dict) -> None:
+async def test_produces_well_formed_xml(minimal_invoice_data: dict) -> None:
     result = await transform_to_ubl(data=minimal_invoice_data)
-    root = fromstring(result["xml"])
-    assert root is not None
+    assert fromstring(result["xml"]) is not None
 
 
 @pytest.mark.asyncio
-async def test_transform_to_ubl_warns_missing_customer_vat(minimal_invoice_data: dict) -> None:
-    data = dict(minimal_invoice_data)
-    customer = dict(data["customer"])
-    customer["vat_number"] = None
-    data["customer"] = customer
+async def test_warns_when_customer_vat_absent(minimal_invoice_data: dict) -> None:
+    data = {**minimal_invoice_data, "customer": {**minimal_invoice_data["customer"], "tax_id": None}}
     result = await transform_to_ubl(data=data)
     assert any("VAT" in w for w in result["warnings"])
 
 
 @pytest.mark.asyncio
-async def test_transform_to_ubl_warns_missing_iban_for_credit_transfer(
-    minimal_invoice_data: dict,
-) -> None:
-    data = dict(minimal_invoice_data)
-    data["payment_means_code"] = "30"
-    data["iban"] = None
+async def test_warns_when_iban_missing_for_credit_transfer(minimal_invoice_data: dict) -> None:
+    data = {**minimal_invoice_data, "payment_means_code": "30"}
     result = await transform_to_ubl(data=data)
     assert any("IBAN" in w for w in result["warnings"])
 
 
 @pytest.mark.asyncio
-async def test_transform_to_ubl_no_warnings_for_complete_data(
-    minimal_invoice_data: dict,
-) -> None:
-    data = dict(minimal_invoice_data)
-    data["iban"] = "BE68539007547034"
-    result = await transform_to_ubl(data=data)
+async def test_no_warnings_for_complete_data(minimal_invoice_data_with_payment: dict) -> None:
+    result = await transform_to_ubl(data=minimal_invoice_data_with_payment)
     assert result["warnings"] == []

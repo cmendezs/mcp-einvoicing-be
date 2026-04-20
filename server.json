@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.cmendezs/mcp-einvoicing-be",
+  "description": "Belgian e-invoicing MCP server: Peppol BIS 3.0, UBL 2.1, PINT-BE (NBB), Mercurius.",
+  "repository": {
+    "url": "https://github.com/cmendezs/mcp-einvoicing-be",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "mcp-einvoicing-be",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "BCE_API_KEY",
+          "description": "API key for the Belgian BCE/KBO enterprise database (optional — public endpoints work without it)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "PEPPOL_ENV",
+          "description": "Peppol network environment: 'production' (default) or 'test'",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "description": "Logging level: DEBUG, INFO (default), WARNING, or ERROR",
+          "isRequired": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

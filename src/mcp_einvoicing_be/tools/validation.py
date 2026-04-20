@@ -1,8 +1,10 @@
-"""Validation tools: validate_invoice_be, validate_pint_be."""
+"""Belgian invoice validation — subclasses DocumentValidator from mcp-einvoicing-core."""
 
 from typing import Annotated, Literal
 
-from mcp_einvoicing_be.models.invoice import MessageSeverity, ValidationMessage, ValidationResult
+from mcp_einvoicing_core import DocumentValidator, ValidationError, format_error
+from mcp_einvoicing_core import DocumentValidationResult
+
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
 from mcp_einvoicing_be.standards.pint_be import PINT_BE_RULES
@@ -17,80 +19,87 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
-async def validate_invoice_be(
-    xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
-    profile: Annotated[
-        ProfileLiteral,
-        "Validation profile: 'peppol-bis-3' (default), 'pint-be', or 'mercurius'",
-    ] = "peppol-bis-3",
-) -> dict[str, object]:
-    """Validate a UBL 2.1 XML invoice against Belgian business rules.
+class BEDocumentValidator(DocumentValidator):
+    """Belgian document validator.
 
-    Applies EN 16931 syntax and semantic checks plus the selected Belgian
-    profile overlay (Peppol BIS Billing 3.0, PINT-BE, or Mercurius).
-    Returns a structured result with per-rule error and warning messages.
+    Subclasses ``DocumentValidator`` and implements ``validate()`` for UBL 2.1
+    documents against the three Belgian profiles. Tools are exposed as instance
+    methods so they can be registered on ``EInvoicingMCPServer`` via
+    ``server.tool()(validator.validate_invoice_be)``.
     """
-    messages: list[ValidationMessage] = []
 
-    root, parse_error = parse_ubl_xml(xml)
-    if parse_error:
-        messages.append(
-            ValidationMessage(
-                severity=MessageSeverity.ERROR,
-                rule_id="XML-PARSE",
-                message=parse_error,
+    async def validate(self, xml: str, profile: str = "peppol-bis-3") -> DocumentValidationResult:
+        """Core validation logic — called by the public tool methods."""
+        root, parse_error = parse_ubl_xml(xml)
+        if parse_error:
+            return DocumentValidationResult(
+                valid=False,
+                profile=profile,
+                errors=[{"rule_id": "XML-PARSE", "message": parse_error, "severity": "error"}],
+                warnings=[],
             )
-        )
-        result = ValidationResult(
-            valid=False,
+
+        rules = _PROFILE_RULES.get(profile, PEPPOL_BIS3_RULES)
+        errors: list[dict[str, str]] = []
+        warnings: list[dict[str, str]] = []
+
+        for rule in rules:
+            violation = self._evaluate_rule(root, rule)
+            if violation:
+                if rule["severity"] == "error":
+                    errors.append(violation)
+                else:
+                    warnings.append(violation)
+
+        return DocumentValidationResult(
+            valid=len(errors) == 0,
             profile=profile,
-            error_count=1,
-            warning_count=0,
-            messages=messages,
+            errors=errors,
+            warnings=warnings,
         )
-        return result.model_dump()
 
-    rules = _PROFILE_RULES.get(profile, PEPPOL_BIS3_RULES)
-    for rule in rules:
-        violation = _evaluate_rule(root, rule)
-        if violation:
-            messages.append(violation)
+    async def validate_invoice_be(
+        self,
+        xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
+        profile: Annotated[
+            ProfileLiteral,
+            "Validation profile: 'peppol-bis-3' (default), 'pint-be', or 'mercurius'",
+        ] = "peppol-bis-3",
+    ) -> dict[str, object]:
+        """Validate a UBL 2.1 XML invoice against Belgian business rules.
 
-    errors = [m for m in messages if m.severity == MessageSeverity.ERROR]
-    warnings = [m for m in messages if m.severity == MessageSeverity.WARNING]
+        Applies EN 16931 syntax and semantic checks plus the selected Belgian
+        profile overlay (Peppol BIS Billing 3.0, PINT-BE, or Mercurius).
+        Returns a structured result with per-rule error and warning messages.
+        """
+        try:
+            result = await self.validate(xml, profile)
+            return result.model_dump()
+        except ValidationError as exc:
+            return {"valid": False, "profile": profile, "errors": [format_error(exc)], "warnings": []}
 
-    result = ValidationResult(
-        valid=len(errors) == 0,
-        profile=profile,
-        error_count=len(errors),
-        warning_count=len(warnings),
-        messages=messages,
-    )
-    return result.model_dump()
+    async def validate_pint_be(
+        self,
+        xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
+    ) -> dict[str, object]:
+        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium (NBB).
 
+        PINT-BE is the Belgian PINT (Peppol International) extension that adds
+        country-specific mandatory elements on top of EN 16931. Rule IDs follow
+        the PINT-BE-Rxxx naming convention from the NBB specification.
+        """
+        return await self.validate_invoice_be(xml=xml, profile="pint-be")
 
-async def validate_pint_be(
-    xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
-) -> dict[str, object]:
-    """Validate an invoice against PINT-BE rules published by the National Bank of Belgium (NBB).
+    def _evaluate_rule(
+        self,
+        root: object,
+        rule: dict[str, str],
+    ) -> dict[str, str] | None:
+        """Evaluate a single XPath-based business rule against a parsed XML tree.
 
-    PINT-BE is the Belgian PINT (Peppol International) extension that adds
-    country-specific mandatory elements on top of EN 16931. Rule IDs follow
-    the PINT-BE-Rxxx naming convention from the NBB specification.
-    """
-    return await validate_invoice_be(xml=xml, profile="pint-be")
-
-
-def _evaluate_rule(
-    root: object,
-    rule: dict[str, str],
-) -> ValidationMessage | None:
-    """Evaluate a single XPath-based business rule against a parsed XML tree.
-
-    Returns a ValidationMessage if the rule is violated, None otherwise.
-    This is a stub — real evaluation delegates to mcp-einvoicing-core's
-    Schematron engine once the dependency is available.
-    """
-    # Delegate to core schematron engine when available.
-    # Stub: always passes during scaffolding.
-    return None
+        Returns a violation dict if the rule fails, None if it passes.
+        Delegates to the core Schematron engine when available; stubs pass
+        during scaffolding.
+        """
+        # Delegate to core schematron engine via super() once integrated.
+        return None

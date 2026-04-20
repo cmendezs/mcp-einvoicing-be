@@ -47,3 +47,6 @@ Thumbs.db
 
 # Claude Code (local settings, memory, session data)
 .claude/
+
+# MCP publisher CLI binary (downloaded at release time, not part of source)
+mcp-publisher

@@ -18,7 +18,7 @@ def minimal_invoice_data() -> dict:
         "currency_code": "EUR",
         "supplier": {
             "name": "Acme NV",
-            "vat_number": "BE0123456789",
+            "tax_id": "BE0123456789",
             "address": {
                 "street": "Rue de la Loi 1",
                 "city": "Brussels",
@@ -28,7 +28,7 @@ def minimal_invoice_data() -> dict:
         },
         "customer": {
             "name": "Client SPRL",
-            "vat_number": "BE0987654321",
+            "tax_id": "BE0987654321",
             "address": {
                 "street": "Koningsstraat 2",
                 "city": "Antwerp",
@@ -44,6 +44,19 @@ def minimal_invoice_data() -> dict:
                 "vat_rate": 21.0,
             }
         ],
+    }
+
+
+@pytest.fixture
+def minimal_invoice_data_with_payment(minimal_invoice_data: dict) -> dict:
+    return {
+        **minimal_invoice_data,
+        "payment_means_code": "30",
+        "payment_terms": {
+            "iban": "BE68539007547034",
+            "bic": "NICA BE BB",
+            "ogm_reference": "+++000/0000/00097+++",
+        },
     }
 
 

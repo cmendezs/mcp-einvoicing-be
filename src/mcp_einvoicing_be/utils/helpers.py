@@ -1,4 +1,9 @@
-"""Shared utility functions for Belgian e-invoicing."""
+"""Belgian-specific utility functions.
+
+Generic utilities (IBAN validation, amount/quantity formatting, date validation,
+XML element construction) are provided by mcp-einvoicing-core and should be
+imported from there. Only Belgium-specific helpers live here.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +12,7 @@ from xml.etree.ElementTree import Element, ParseError, fromstring
 
 
 def normalize_vat_be(vat_number: str) -> str:
-    """Normalize a Belgian VAT/enterprise number to the 'BE' + 10-digit format.
+    """Normalize a Belgian VAT/enterprise number to 'BE' + 10-digit format.
 
     Accepts:
     - ``BE0123456789``
@@ -15,13 +20,10 @@ def normalize_vat_be(vat_number: str) -> str:
     - ``BE 0123.456.789``
     - ``0123.456.789``
 
-    Raises ValueError if the number is not a valid Belgian enterprise number.
+    Raises ``ValueError`` if the result is not exactly 10 digits.
     """
     cleaned = re.sub(r"[\s.\-]", "", vat_number.upper())
-    if cleaned.startswith("BE"):
-        digits = cleaned[2:]
-    else:
-        digits = cleaned
+    digits = cleaned[2:] if cleaned.startswith("BE") else cleaned
 
     if not re.fullmatch(r"\d{10}", digits):
         raise ValueError(
@@ -33,43 +35,24 @@ def normalize_vat_be(vat_number: str) -> str:
 
 
 def parse_ubl_xml(xml: str) -> tuple[Element | None, str | None]:
-    """Parse a UBL XML string and return (root_element, error_message).
-
-    Returns ``(element, None)`` on success and ``(None, error_str)`` on failure.
-    """
+    """Parse a UBL XML string and return ``(root_element, None)`` or ``(None, error_str)``."""
     try:
-        root = fromstring(xml.strip())
-        return root, None
+        return fromstring(xml.strip()), None
     except ParseError as exc:
         return None, f"XML parse error: {exc}"
 
 
-def format_belgian_ogm(amount: float, supplier_digits: str) -> str:
-    """Generate a Belgian OGM/VCS structured payment reference (+++ format).
+def format_belgian_ogm(base_digits: str) -> str:
+    """Generate a Belgian OGM/VCS structured payment reference (+++xxx/xxxx/xxxxx+++).
 
-    The OGM (Overschrijvingsformulier met Gestructureerde Mededeling) reference
-    is the standard structured creditor reference used in Belgian banking.
-    Format: +++xxx/xxxx/xxxxx+++ with a modulo-97 check digit.
-
-    ``supplier_digits`` should be a string of digits used as the base reference.
+    The modulo-97 check digit is appended to the last segment.
+    ``base_digits`` should be a string of up to 10 digits used as the base reference.
     """
-    base = re.sub(r"\D", "", supplier_digits)[:10].ljust(10, "0")
-    part1 = base[:3]
-    part2 = base[3:7]
-    part3_base = base[7:10]
+    base = re.sub(r"\D", "", base_digits)[:10].ljust(10, "0")
     checksum = int(base) % 97 or 97
-    part3 = f"{part3_base}{checksum:02d}"
-    return f"+++{part1}/{part2}/{part3}+++"
-
-
-def is_valid_iban(iban: str) -> bool:
-    """Basic IBAN format validation (structure check, not modulo-97)."""
-    cleaned = re.sub(r"\s", "", iban.upper())
-    return bool(re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{1,30}", cleaned))
+    return f"+++{base[:3]}/{base[3:7]}/{base[7:10]}{checksum:02d}+++"
 
 
 def vat_rate_to_category(rate: float) -> str:
     """Map a Belgian VAT rate percentage to its EN 16931 tax category code."""
-    if rate == 0.0:
-        return "Z"
-    return "S"
+    return "Z" if rate == 0.0 else "S"

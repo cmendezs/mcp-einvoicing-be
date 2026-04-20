@@ -50,7 +50,11 @@ async def lookup_vat_be(
         response = await client._request("GET", f"/enterprises/{digits}")
     except PlatformError as exc:
         if exc.status_code == 404:
-            return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}  # noqa: E501
+            return {
+                "found": False,
+                "vat_number": normalized,
+                "error": "Enterprise number not found",
+            }  # noqa: E501
         raise
 
     data: dict[str, object] = response.json()

@@ -79,7 +79,9 @@ class BEInvoice(InvoiceDocument):  # type: ignore[misc]
     buyer: Customer
     lines: list[BEInvoiceLine] = Field(..., min_length=1)
     payment: BEPaymentTerms | None = Field(default=None)
-    order_reference: str | None = Field(default=None, description="Purchase order reference (BT-13)")  # noqa: E501
+    order_reference: str | None = Field(
+        default=None, description="Purchase order reference (BT-13)"
+    )  # noqa: E501
     contract_reference: str | None = Field(default=None, description="Contract reference (BT-12)")
     payment_means_code: str = Field(
         default="30",

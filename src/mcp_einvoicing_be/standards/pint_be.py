@@ -53,8 +53,6 @@ PINT_BE_RULES: list[dict[str, str]] = [
         "id": "PINT-BE-R005",
         "severity": "error",
         "xpath": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID",
-        "message": (
-            "For B2B transactions, the buyer's Belgian VAT number shall be present."
-        ),
+        "message": ("For B2B transactions, the buyer's Belgian VAT number shall be present."),
     },
 ]

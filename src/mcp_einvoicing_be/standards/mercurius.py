@@ -29,9 +29,7 @@ MERCURIUS_RULES: list[dict[str, str]] = [
         "id": "MER-001",
         "severity": "error",
         "xpath": "/Invoice/cbc:CustomizationID",
-        "message": (
-            "Invoices submitted to Mercurius shall use the Mercurius CustomizationID."
-        ),
+        "message": ("Invoices submitted to Mercurius shall use the Mercurius CustomizationID."),
     },
     {
         "id": "MER-002",

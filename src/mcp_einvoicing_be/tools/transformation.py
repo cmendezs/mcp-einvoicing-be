@@ -37,9 +37,7 @@ async def transform_to_ubl(
     if invoice.payment_means_code == "30":
         iban = getattr(terms, "iban", None) if terms else None
         if not iban:
-            warnings.append(
-                "Payment means is credit transfer (code 30) but no IBAN was provided."
-            )
+            warnings.append("Payment means is credit transfer (code 30) but no IBAN was provided.")
         elif not validate_iban(iban):
             warnings.append(f"IBAN '{iban}' does not appear to be valid.")
 

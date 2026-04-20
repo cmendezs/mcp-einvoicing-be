@@ -13,26 +13,18 @@ _PEPPOL_SML_BASE = "https://edelivery.tech.ec.europa.eu/edelivery-smp"
 
 
 def _bce_client() -> BaseEInvoicingClient:
-    """Build an authenticated BCE/KBO API client.
-
-    Uses API_KEY auth when ``BCE_API_KEY`` is set, falling back to NONE (public
-    endpoints) when the key is absent — the BCE public REST API does not require
-    authentication for basic enterprise lookups.
-    """
     api_key = os.environ.get("BCE_API_KEY", "")
-    return BaseEInvoicingClient(
-        base_url=_BCE_API_BASE,
-        auth_mode=AuthMode.API_KEY if api_key else AuthMode.NONE,
-        api_key=api_key or None,
-    )
+    if api_key:
+        return BaseEInvoicingClient(
+            base_url=_BCE_API_BASE,
+            auth_mode=AuthMode.BEARER_TOKEN,
+            static_bearer_token=api_key,
+        )
+    return BaseEInvoicingClient(base_url=_BCE_API_BASE, auth_mode=AuthMode.NONE)
 
 
 def _peppol_client() -> BaseEInvoicingClient:
-    """Build an unauthenticated Peppol SMP/SML lookup client."""
-    return BaseEInvoicingClient(
-        base_url=_PEPPOL_SML_BASE,
-        auth_mode=AuthMode.NONE,
-    )
+    return BaseEInvoicingClient(base_url=_PEPPOL_SML_BASE, auth_mode=AuthMode.NONE)
 
 
 async def lookup_vat_be(
@@ -53,14 +45,15 @@ async def lookup_vat_be(
     normalized = normalize_vat_be(vat_number)
     digits = normalized[2:]  # strip 'BE' for the path segment
 
-    async with _bce_client() as client:
-        try:
-            data: dict[str, object] = await client.get(f"/enterprises/{digits}")
-        except PlatformError as exc:
-            if exc.status_code == 404:
-                return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}  # noqa: E501
-            raise
+    client = _bce_client()
+    try:
+        response = await client._request("GET", f"/enterprises/{digits}")
+    except PlatformError as exc:
+        if exc.status_code == 404:
+            return {"found": False, "vat_number": normalized, "error": "Enterprise number not found"}  # noqa: E501
+        raise
 
+    data: dict[str, object] = response.json()
     return {
         "found": True,
         "vat_number": normalized,
@@ -96,22 +89,22 @@ async def check_peppol_participant_be(
     scheme, value = participant_id.split(":", 1)
     path = f"/iso6523-actorid-upis::{scheme}:{value}"
 
-    async with _peppol_client() as client:
-        try:
-            raw: str = await client.get_raw(path, follow_redirects=True)
-        except PlatformError as exc:
-            if exc.status_code == 404:
-                return {
-                    "registered": False,
-                    "participant_id": participant_id,
-                    "error": "Participant not found on Peppol network",
-                }
-            raise
+    client = _peppol_client()
+    try:
+        response = await client._request("GET", path)
+    except PlatformError as exc:
+        if exc.status_code == 404:
+            return {
+                "registered": False,
+                "participant_id": participant_id,
+                "error": "Participant not found on Peppol network",
+            }
+        raise
 
     return {
         "registered": True,
         "participant_id": participant_id,
-        "raw": raw,
+        "raw": response.text,
     }
 
 

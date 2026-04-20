@@ -75,8 +75,8 @@ class BEInvoice(InvoiceDocument):
         default="peppol-bis-3",
         description="Belgian Peppol profile to apply",
     )
-    seller: Supplier  # type: ignore[assignment]
-    buyer: Customer  # type: ignore[assignment]
+    seller: Supplier
+    buyer: Customer
     lines: list[BEInvoiceLine] = Field(..., min_length=1)  # type: ignore[assignment]
     payment: BEPaymentTerms | None = Field(default=None)  # type: ignore[assignment]
     order_reference: str | None = Field(default=None, description="Purchase order reference (BT-13)")  # noqa: E501

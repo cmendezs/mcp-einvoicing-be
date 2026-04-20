@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from itertools import groupby
+from typing import Any
 from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
 from mcp_einvoicing_core import format_amount, format_quantity
@@ -107,7 +108,7 @@ def render_ubl_invoice(
     return tostring(root, encoding="unicode", xml_declaration=False)
 
 
-def _render_party(root: Element, wrapper_tag: str, party: object) -> None:
+def _render_party(root: Element, wrapper_tag: str, party: Any) -> None:
     wrapper = SubElement(root, _q(_CAC, wrapper_tag))
     party_el = SubElement(wrapper, _q(_CAC, "Party"))
 
@@ -125,9 +126,9 @@ def _render_party(root: Element, wrapper_tag: str, party: object) -> None:
         _el(ts, _q(_CBC, "ID"), "VAT")
 
     legal = SubElement(party_el, _q(_CAC, "PartyLegalEntity"))
-    _el(legal, _q(_CBC, "RegistrationName"), party.name)  # type: ignore[union-attr]
+    _el(legal, _q(_CBC, "RegistrationName"), party.name)
 
-    addr = party.address  # type: ignore[union-attr]
+    addr = party.address
     address_el = SubElement(party_el, _q(_CAC, "PostalAddress"))
     _el(address_el, _q(_CBC, "StreetName"), addr.street)
     _el_opt(address_el, _q(_CBC, "AdditionalStreetName"), getattr(addr, "additional_street", None))

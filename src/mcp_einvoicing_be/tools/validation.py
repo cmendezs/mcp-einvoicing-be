@@ -6,7 +6,6 @@ from mcp_einvoicing_core import (
     BaseDocumentValidator,
     DocumentValidationResult,
     ValidationError,
-    format_error,
 )
 
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
@@ -33,7 +32,7 @@ class BEDocumentValidator(BaseDocumentValidator):
     def get_schema_version(self) -> str:
         return "Peppol BIS 3.0 / EN16931"
 
-    def validate(self, document_content: str | bytes) -> DocumentValidationResult:  # type: ignore[override]
+    def validate(self, document_content: str | bytes) -> DocumentValidationResult:
         return self._validate_with_profile(
             document_content if isinstance(document_content, str) else document_content.decode(),
             profile="peppol-bis-3",
@@ -88,7 +87,7 @@ class BEDocumentValidator(BaseDocumentValidator):
             result = self._validate_with_profile(xml, profile)
             return result.to_dict()
         except ValidationError as exc:
-            return {"valid": False, "profile": profile, "errors": [format_error(exc)], "warnings": []}  # noqa: E501
+            return {"valid": False, "profile": profile, "errors": [str(exc)], "warnings": []}
 
     async def validate_pint_be(
         self,

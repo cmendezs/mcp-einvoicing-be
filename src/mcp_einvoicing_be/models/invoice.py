@@ -23,7 +23,7 @@ class VatCategory(StrEnum):
     REVERSE_CHARGE = "AE"
 
 
-class BEInvoiceLine(InvoiceLineItem):
+class BEInvoiceLine(InvoiceLineItem):  # type: ignore[misc]
     """Belgian invoice line.
 
     Extends ``InvoiceLineItem`` with the EN 16931 VAT category code and the
@@ -60,7 +60,7 @@ class BEPaymentTerms(BaseModel):
     due_date: str | None = Field(default=None, description="Payment due date (YYYY-MM-DD)")
 
 
-class BEInvoice(InvoiceDocument):
+class BEInvoice(InvoiceDocument):  # type: ignore[misc]
     """Belgian e-invoice.
 
     Extends ``InvoiceDocument`` with Belgium-specific fields: PINT-BE profile
@@ -77,8 +77,8 @@ class BEInvoice(InvoiceDocument):
     )
     seller: Supplier
     buyer: Customer
-    lines: list[BEInvoiceLine] = Field(..., min_length=1)  # type: ignore[assignment]
-    payment: BEPaymentTerms | None = Field(default=None)  # type: ignore[assignment]
+    lines: list[BEInvoiceLine] = Field(..., min_length=1)
+    payment: BEPaymentTerms | None = Field(default=None)
     order_reference: str | None = Field(default=None, description="Purchase order reference (BT-13)")  # noqa: E501
     contract_reference: str | None = Field(default=None, description="Contract reference (BT-12)")
     payment_means_code: str = Field(

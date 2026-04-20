@@ -6,7 +6,7 @@ from mcp_einvoicing_core import InvoiceParty, PartyAddress, TaxIdentifier
 from pydantic import Field, field_validator
 
 
-class BEAddress(PartyAddress):
+class BEAddress(PartyAddress):  # type: ignore[misc]
     """Belgian postal address.
 
     Extends ``PartyAddress`` with no extra fields — the base already covers
@@ -15,14 +15,14 @@ class BEAddress(PartyAddress):
     """
 
 
-class BEParty(InvoiceParty):
+class BEParty(InvoiceParty):  # type: ignore[misc]
     """Base Belgian party (supplier or customer).
 
     Adds the Peppol participant ID and the Belgian KBO/BCE scheme identifier
     on top of the core ``InvoiceParty``.
     """
 
-    tax_id: TaxIdentifier | None = Field(default=None)  # type: ignore[assignment]
+    tax_id: TaxIdentifier | None = Field(default=None)
     peppol_id: str | None = Field(
         default=None,
         description="Peppol participant ID, e.g. '0208:0123456789'",

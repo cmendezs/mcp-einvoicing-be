@@ -11,7 +11,7 @@ from mcp_einvoicing_be.standards.ubl import UBL_NAMESPACES, render_ubl_invoice
 ProfileLiteral = Literal["peppol-bis-3", "pint-be"]
 
 
-class BEDocumentGenerator(BaseDocumentGenerator):
+class BEDocumentGenerator(BaseDocumentGenerator):  # type: ignore[misc]
     """Belgian UBL 2.1 document generator.
 
     Subclasses ``DocumentGenerator`` and implements ``generate()`` for the
@@ -25,7 +25,7 @@ class BEDocumentGenerator(BaseDocumentGenerator):
     def get_country_code(self) -> str:
         return "BE"
 
-    def generate(self, invoice: BEInvoice) -> str:  # type: ignore[override]
+    def generate(self, invoice: BEInvoice) -> str:
         """Serialize a ``BEInvoice`` to a UBL 2.1 XML string."""
         return render_ubl_invoice(
             invoice=invoice,

@@ -1,6 +1,6 @@
 """Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from mcp_einvoicing_core import (
     BaseDocumentValidator,
@@ -22,7 +22,7 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
-class BEDocumentValidator(BaseDocumentValidator):
+class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
     """Belgian document validator.
 
     Subclasses ``BaseDocumentValidator`` and implements ``validate()`` for UBL 2.1
@@ -85,7 +85,7 @@ class BEDocumentValidator(BaseDocumentValidator):
         """
         try:
             result = self._validate_with_profile(xml, profile)
-            return result.to_dict()
+            return cast(dict[str, object], result.to_dict())
         except ValidationError as exc:
             return {"valid": False, "profile": profile, "errors": [str(exc)], "warnings": []}
 

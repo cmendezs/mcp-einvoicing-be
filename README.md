@@ -1,4 +1,4 @@
-# mcp-einvoicing-be
+# mcp-einvoicing-be 🇧🇪
 
 <!-- mcp-name: io.github.cmendezs/mcp-einvoicing-be -->
 

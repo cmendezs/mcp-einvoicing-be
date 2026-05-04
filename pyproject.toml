@@ -36,7 +36,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "mcp-einvoicing-core>=0.1.0",
+    "mcp-einvoicing-core>=0.1.0,<1.0.0",
     "pydantic>=2.0.0",
     "lxml>=5.0.0",
 ]
@@ -60,6 +60,9 @@ Homepage = "https://github.com/cmendezs/mcp-einvoicing-be"
 Repository = "https://github.com/cmendezs/mcp-einvoicing-be"
 Issues = "https://github.com/cmendezs/mcp-einvoicing-be/issues"
 Changelog = "https://github.com/cmendezs/mcp-einvoicing-be/blob/main/CHANGELOG.md"
+
+[tool.uv.sources]
+mcp-einvoicing-core = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mcp_einvoicing_be"]

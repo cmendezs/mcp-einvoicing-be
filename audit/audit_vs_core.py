@@ -1,220 +1,251 @@
 """Pre-publish audit: verify mcp-einvoicing-be coherence against mcp-einvoicing-core.
 
-Run standalone:
-    python audit/audit_vs_core.py
-    python audit/audit_vs_core.py --output audit/report.json
-    python audit/audit_vs_core.py --fail-on blocking   # exits 2 on blocking failures
-    python audit/audit_vs_core.py --fail-on warnings   # exits 1 on warnings, 2 on blocking
+Run standalone (from the workspace root):
+    uv run python mcp-einvoicing-be/audit/audit_vs_core.py
+    uv run python mcp-einvoicing-be/audit/audit_vs_core.py --output mcp-einvoicing-be/audit/report.json
+    uv run python mcp-einvoicing-be/audit/audit_vs_core.py --fail-on blocking
 
 Exit codes:
     0  All checks passed
     1  Warnings only (non-blocking)
     2  Blocking failures found
 
-This script is designed to be importable with no side effects; all execution
-is guarded by `if __name__ == "__main__"`.
-
-[NEED: update CHECK 1 once mcp-einvoicing-core public API is finalised]
-[NEED: update CHECK 5 once mcp-einvoicing-core tool category registry is defined]
+CHECK 1 and CHECK 4 are delegated to mcp_einvoicing_core.audit.
+CHECK 2 (tool registry), CHECK 3 (BEInvoice field alignment), and CHECK 5
+(BE-specific structural) are implemented here.
 """
 
 from __future__ import annotations
 
-import argparse
-import importlib
-import importlib.metadata
-import inspect
 import json
 import sys
-import textwrap
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+
+from mcp_einvoicing_core.audit import (
+    SEVERITY_BLOCKING,
+    SEVERITY_OK,
+    SEVERITY_WARNING,
+    AuditReport,
+    CheckFinding,
+    CheckResult,
+    _try_import,
+    make_report,
+    parse_audit_args,
+    render_summary_table,
+    run_check_core_coverage,
+    run_check_version_compatibility,
+)
 
 # ---------------------------------------------------------------------------
-# Data structures
+# CHECK 1 configuration — country-specific constants
 # ---------------------------------------------------------------------------
 
-SEVERITY_BLOCKING = "BLOCKING"
-SEVERITY_WARNING = "WARNING"
-SEVERITY_OK = "OK"
-SEVERITY_SKIP = "SKIP"
-
-
-@dataclass
-class CheckFinding:
-    check_id: str
-    tag: str  # e.g. [MISSING], [OVERRIDE], [OK], [SKIP]
-    severity: str  # SEVERITY_* constants
-    symbol: str  # What was checked (class name, field name, etc.)
-    message: str
-
-
-@dataclass
-class CheckResult:
-    check_id: str
-    name: str
-    findings: list[CheckFinding] = field(default_factory=list)
-    skipped: bool = False
-    skip_reason: str = ""
-
-    @property
-    def blocking_count(self) -> int:
-        return sum(1 for f in self.findings if f.severity == SEVERITY_BLOCKING)
-
-    @property
-    def warning_count(self) -> int:
-        return sum(1 for f in self.findings if f.severity == SEVERITY_WARNING)
-
-    @property
-    def passed(self) -> bool:
-        return self.blocking_count == 0
-
-
-@dataclass
-class AuditReport:
-    generated_at: str
-    pkg_version: str
-    core_version: str | None
-    core_version_compatible: bool
-    checks: list[CheckResult] = field(default_factory=list)
-
-    @property
-    def total_blocking(self) -> int:
-        return sum(c.blocking_count for c in self.checks)
-
-    @property
-    def total_warnings(self) -> int:
-        return sum(c.warning_count for c in self.checks)
-
-    @property
-    def exit_code(self) -> int:
-        if self.total_blocking > 0:
-            return 2
-        if self.total_warnings > 0:
-            return 1
-        return 0
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "generated_at": self.generated_at,
-            "pkg_version": self.pkg_version,
-            "core_version": self.core_version,
-            "core_version_compatible": self.core_version_compatible,
-            "exit_code": self.exit_code,
-            "total_blocking": self.total_blocking,
-            "total_warnings": self.total_warnings,
-            "checks": [
-                {
-                    "check_id": c.check_id,
-                    "name": c.name,
-                    "passed": c.passed,
-                    "skipped": c.skipped,
-                    "skip_reason": c.skip_reason,
-                    "blocking_count": c.blocking_count,
-                    "warning_count": c.warning_count,
-                    "findings": [
-                        {
-                            "check_id": f.check_id,
-                            "tag": f.tag,
-                            "severity": f.severity,
-                            "symbol": f.symbol,
-                            "message": f.message,
-                        }
-                        for f in c.findings
-                    ],
-                }
-                for c in self.checks
-            ],
-        }
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _try_import(module_path: str) -> tuple[Any | None, str | None]:
-    """Attempt to import a module; return (module, None) or (None, error_message)."""
-    try:
-        return importlib.import_module(module_path), None
-    except ImportError as exc:
-        return None, str(exc)
-
-
-def _get_public_symbols(module: Any) -> dict[str, Any]:
-    """Return all public symbols from a module (respecting __all__ if defined)."""
-    if hasattr(module, "__all__"):
-        return {name: getattr(module, name) for name in module.__all__ if hasattr(module, name)}
-    return {
-        name: obj
-        for name, obj in inspect.getmembers(module)
-        if not name.startswith("_") and not inspect.ismodule(obj)
-    }
-
-
-def _get_installed_version(package_name: str) -> str | None:
-    try:
-        return importlib.metadata.version(package_name)
-    except importlib.metadata.PackageNotFoundError:
-        return None
-
-
-def _parse_version(v: str) -> tuple[int, ...]:
-    """Parse a PEP 440 version string into a comparable tuple (major, minor, patch)."""
-    parts = v.split(".")
-    result = []
-    for p in parts[:3]:
-        try:
-            result.append(int(p.split("a")[0].split("b")[0].split("rc")[0]))
-        except ValueError:
-            result.append(0)
-    while len(result) < 3:
-        result.append(0)
-    return tuple(result)
-
-
-def _version_in_range(version: str, spec: str) -> bool:
-    """
-    Naive PEP 440 specifier check for >=X,<Y ranges.
-    Only handles >= and < comparators (sufficient for typical ~= and range deps).
-    [NEED: replace with packaging.version for full PEP 440 compliance]
-    """
-    v = _parse_version(version)
-    for part in spec.split(","):
-        part = part.strip()
-        if part.startswith(">="):
-            low = _parse_version(part[2:].strip())
-            if v < low:
-                return False
-        elif part.startswith("<"):
-            high = _parse_version(part[1:].strip())
-            if v >= high:
-                return False
-        elif part.startswith("~="):
-            base = _parse_version(part[2:].strip())
-            if len(base) >= 2 and (v < base or v[0] != base[0]):
-                return False
-    return True
-
-
-# ---------------------------------------------------------------------------
-# CHECK 1 — Core interface coverage
-# ---------------------------------------------------------------------------
+# Peppol BIS 3.0 / PINT-BE is EN 16931 family.
+# BE country audit 2026-05 (finding BE-SC-2) confirms:
+#   - BEInvoice currently extends InvoiceDocument — WRONG BASE for PINT-BE pathway.
+#   - BEInvoice(EN16931Invoice) must be scaffolded before this constant can be set True.
+# Set to None to skip the canonical tree check until BEInvoice is migrated (Sprint 2).
+# [GAP id=BE-SC-2]
+_IS_EN16931_FAMILY: bool | None = None
+_PRIMARY_INVOICE_CLASS: tuple[str, str] | None = None
 
 _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
-    # [NEED: populate once mcp-einvoicing-core public API is known]
+    "mcp_einvoicing_core.base_server": {
+        # OVERRIDE-REASON: BE has no document parser class; InvoiceDocument.model_validate() is used inline in tool handlers
+        "BaseDocumentParser",
+        # OVERRIDE-REASON: Peppol BIS 3.0 is push-only submission; no session-based lifecycle API is required for BE
+        "BaseLifecycleManager",
+        # OVERRIDE-REASON: party validation is performed inline in BE tool handlers, not via the ABC party validator pattern
+        "BasePartyValidator",
+        # OVERRIDE-REASON: Peppol submission returns a plain dict; SubmitResult typed model not used in BE
+        "SubmitResult",
+        # OVERRIDE-REASON: TaxIdValidationResult not yet returned by BE tax-ID validation helpers; tracked as future work
+        "TaxIdValidationResult",
+        # OVERRIDE-REASON: BE uses EInvoicingMCPServer; raw FastMCP handle not needed in package code
+        "FastMCP",
+        # OVERRIDE-REASON: stdlib re-export; BE imports abstractmethod from abc directly
+        "abstractmethod",
+        # OVERRIDE-REASON: stdlib re-export; BE imports ABC from abc directly
+        "ABC",
+        # OVERRIDE-REASON: stdlib re-export; not used in BE package code
+        "Any",
+        # OVERRIDE-REASON: third-party re-export; pydantic BaseModel imported from pydantic directly in BE models
+        "BaseModel",
+        # OVERRIDE-REASON: third-party re-export; pydantic Field imported from pydantic directly in BE models
+        "Field",
+        # OVERRIDE-REASON: assert_not_read_only is an internal server guard not needed in BE tool handlers
+        "assert_not_read_only",
+        # OVERRIDE-REASON: scrub is a prompt-injection sanitiser helper; BE does not apply it at the tool boundary yet (BE-SH-1)
+        "scrub",
+    },
+    "mcp_einvoicing_core.digital_signature": {
+        # OVERRIDE-REASON: Peppol AS4 transport handles its own signing; XAdES-EPES envelope signing is not required for PINT-BE
+        "BaseDocumentSigner",
+        # OVERRIDE-REASON: XAdES signing config and signer not needed; Peppol BIS 3.0 uses AS4 transport-level signatures
+        "XAdESSignerConfig",
+        "XAdESEPESSigner",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in digital_signature; BE imports these from source directly
+        "ABC",
+        "abstractmethod",
+        "dataclass",
+        "datetime",
+        "field",
+        "safe_fromstring",
+        "timezone",
+    },
+    "mcp_einvoicing_core.download_rules": {
+        # OVERRIDE-REASON: BE spec artefacts (Schematron, XSDs) are bundled manually into specs/; the artefact-download framework is not used
+        "DownloadSpec",
+        "download_artefacts",
+        # OVERRIDE-REASON: download_rules CLI entry point; not called from BE package code
+        "main",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in download_rules; BE imports from source directly
+        "Path",
+        "dataclass",
+        "field",
+        "entry_points",
+    },
+    "mcp_einvoicing_core.en16931": {
+        # OVERRIDE-REASON: BEInvoice(InvoiceDocument) pending migration to EN16931Invoice (BE-SC-2 Sprint 2);
+        # EN16931 model tree not yet adopted by the BE package [GAP id=BE-SC-2]
+        "EN16931Invoice",
+        "EN16931Address",
+        "EN16931Party",
+        "EN16931Tax",
+        "EN16931AllowanceCharge",
+        "EN16931LineItem",
+        "EN16931PaymentMeans",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in en16931; BE imports from pydantic/stdlib directly
+        "BaseModel",
+        "Decimal",
+        "Field",
+        "date",
+        "field_validator",
+        "model_validator",
+    },
+    "mcp_einvoicing_core.exceptions": {
+        # OVERRIDE-REASON: BE raises specific exception subclasses directly; EInvoicingError base not re-raised at tool layer
+        "EInvoicingError",
+        # OVERRIDE-REASON: party validation in BE is inline and returns structured error dicts; PartyValidationError not raised
+        "PartyValidationError",
+        # OVERRIDE-REASON: UBL 2.1 validation in BE uses Schematron, not XSD; XSDValidationError is not applicable
+        "XSDValidationError",
+        # OVERRIDE-REASON: BE surfaces ValidationError from core; SchematronValidationError is not re-raised to the tool layer
+        "SchematronValidationError",
+        # OVERRIDE-REASON: Peppol SMP and BCE/KBO are public unauthenticated endpoints; AuthenticationError is not raised in BE
+        "AuthenticationError",
+    },
+    "mcp_einvoicing_core.http_client": {
+        # OVERRIDE-REASON: BE has no OAuth2 token exchange; Peppol SMP and BCE/KBO are public endpoints not requiring OAuth
+        "OAuthConfig",
+        "OAuthValues",
+        "BaseEInvoicingConfig",
+        # OVERRIDE-REASON: no session token caching needed; all BE lookups are stateless HTTP GET requests
+        "TokenCache",
+        # OVERRIDE-REASON: AuthenticationError re-exported by http_client; already overridden in exceptions — no auth path in BE
+        "AuthenticationError",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in http_client; BE imports from source directly
+        "Any",
+        "BaseModel",
+        "BaseSettings",
+        "Enum",
+        "Field",
+        "Path",
+        "field_validator",
+        "parsedate_to_datetime",
+        "urlparse",
+    },
+    "mcp_einvoicing_core.models": {
+        # OVERRIDE-REASON: BE defines BEPaymentTerms(PaymentTerms) with IBAN and OGM fields; core PaymentTerms base not directly imported
+        "PaymentTerms",
+        # OVERRIDE-REASON: BE uses inline vat_summary as a list of dicts on BEInvoice; core VATSummary model is not imported
+        "VATSummary",
+        # OVERRIDE-REASON: TaxIdValidationResult not yet returned by BE tax-ID helpers; tracked as future work
+        "TaxIdValidationResult",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in models; BE imports from pydantic/stdlib directly
+        "BaseModel",
+        "Decimal",
+        "Field",
+        "field_validator",
+        "model_validator",
+    },
+    "mcp_einvoicing_core.pdf": {
+        # OVERRIDE-REASON: Peppol BIS 3.0 / PINT-BE does not mandate PDF/A-3 embedding; PDFEmbedder is not applicable
+        "PDFEmbedder",
+    },
+    "mcp_einvoicing_core.peppol": {
+        # OVERRIDE-REASON: check_peppol_participant_be uses a hand-rolled BaseEInvoicingClient pointed at the EU SMP base URL;
+        # migration to PeppolSMPClient deferred to BE-P-1 (Q3 2026) [GAP id=BE-P-1]
+        "PeppolSMPClient",
+        "PeppolLookupResult",
+        "PeppolServiceInfo",
+        "PeppolParticipantId",
+        # OVERRIDE-REASON: BE uses string constants for Peppol environment rather than the PeppolEnvironment enum
+        "PeppolEnvironment",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in peppol; BE imports from source directly
+        "Enum",
+        "dataclass",
+        "field",
+        "safe_fromstring",
+    },
+    "mcp_einvoicing_core.profile_registry": {
+        # OVERRIDE-REASON: BE uses its own CUSTOMIZATION_IDS dict in peppol_bis_3.py; core ProfileRegistry not imported
+        "ProfileEntry",
+        "ProfileRegistry",
+        # OVERRIDE-REASON: set_profile_registry replaces the global registry instance; BE does not customise the registry
+        "set_profile_registry",
+        # OVERRIDE-REASON: stdlib re-export; BE imports dataclass from dataclasses directly
+        "dataclass",
+    },
+    "mcp_einvoicing_core.qr": {
+        # OVERRIDE-REASON: Peppol BIS 3.0 / PINT-BE does not require QR code generation; generate_qr_png_base64 is not used
+        "generate_qr_png_base64",
+    },
+    "mcp_einvoicing_core.schematron": {
+        # OVERRIDE-REASON: BE implements lxml-based validation directly in tools/validation.py;
+        # SchematronValidator ABC not sub-classed pending BE-SC-1 implementation
+        "SchematronValidator",
+        "BaseStructuredValidator",
+        # OVERRIDE-REASON: UBL 2.1 uses Schematron (not XSD/JSON schema) for business rules; structured validators not applicable yet
+        "BaseXSDValidator",
+        "BaseJSONValidator",
+        # OVERRIDE-REASON: BE uses ValidationResult from core; ValidationMessage detail type is not used in BE tools
+        "ValidationMessage",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in schematron; BE imports from source directly
+        "ABC",
+        "abstractmethod",
+        "Path",
+        "dataclass",
+        "field",
+        "safe_fromstring",
+        "safe_parser",
+    },
+    "mcp_einvoicing_core.xml_utils": {
+        # OVERRIDE-REASON: BE UBL serializer uses its own lxml helper functions in standards/ubl.py; core xml_element/xml_optional not used
+        "xml_element",
+        "xml_optional",
+        # OVERRIDE-REASON: BE-SH-1 tracks adding xml_escape from core to all UBL free-text fields; not yet applied
+        "xml_escape",
+        # OVERRIDE-REASON: BE tools return plain error strings; structured format_error dict not used
+        "format_error",
+        # OVERRIDE-REASON: BE UBL serializer omits None elements directly; filter_empty_values utility is not required
+        "filter_empty_values",
+        # OVERRIDE-REASON: BE tools accept raw XML bytes directly; resolve_xml_input indirection is not used
+        "resolve_xml_input",
+        # OVERRIDE-REASON: date validation handled by Pydantic date type on BEInvoice fields; validate_date_iso helper not needed
+        "validate_date_iso",
+        # OVERRIDE-REASON: mark_untrusted / mark_untrusted_fields prompt-injection helpers not yet applied in BE tools
+        "mark_untrusted",
+        "mark_untrusted_fields",
+        # OVERRIDE-REASON: stdlib/third-party re-exports in xml_utils; BE imports from source directly
+        "Any",
+        "Decimal",
+        "safe_fromstring",
+        "safe_parser",
+    },
 }
 
-_CORE_MODULES_TO_CHECK: list[str] = [
-    "mcp_einvoicing_core",
-    "mcp_einvoicing_core.models",
-    "mcp_einvoicing_core.validators",
-    "mcp_einvoicing_core.tools",
-]
-
-_PKG_MODULES: list[str] = [
+_BE_MODULES: list[str] = [
     "mcp_einvoicing_be",
     "mcp_einvoicing_be.models.invoice",
     "mcp_einvoicing_be.models.party",
@@ -230,102 +261,7 @@ _PKG_MODULES: list[str] = [
     "mcp_einvoicing_be.utils.helpers",
 ]
 
-
-def _collect_pkg_imports() -> set[str]:
-    """Collect all symbol names imported from core into BE modules."""
-    imported: set[str] = set()
-    for mod_path in _PKG_MODULES:
-        mod, err = _try_import(mod_path)
-        if mod is None:
-            continue
-        for name, obj in inspect.getmembers(mod):
-            if not name.startswith("_"):
-                obj_module = getattr(obj, "__module__", "") or ""
-                if "mcp_einvoicing_core" in obj_module:
-                    imported.add(name)
-    return imported
-
-
-def run_check_1() -> CheckResult:
-    """CHECK 1 — Core interface coverage."""
-    result = CheckResult(check_id="CHECK_1", name="Core interface coverage")
-
-    core_available = _get_installed_version("mcp-einvoicing-core") is not None
-    if not core_available:
-        result.skipped = True
-        result.skip_reason = (
-            "mcp-einvoicing-core is not installed. Install it with: pip install mcp-einvoicing-core"
-        )
-        result.findings.append(
-            CheckFinding(
-                check_id="CHECK_1",
-                tag="[SKIP]",
-                severity=SEVERITY_WARNING,
-                symbol="mcp-einvoicing-core",
-                message="Package not installed — cannot verify core interface coverage.",
-            )
-        )
-        return result
-
-    pkg_imports = _collect_pkg_imports()
-
-    for mod_path in _CORE_MODULES_TO_CHECK:
-        core_mod, err = _try_import(mod_path)
-        if core_mod is None:
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_1",
-                    tag="[SKIP]",
-                    severity=SEVERITY_WARNING,
-                    symbol=mod_path,
-                    message=f"Could not import core module: {err}",
-                )
-            )
-            continue
-
-        overrides_for_mod = _INTENTIONAL_OVERRIDES.get(mod_path, set())
-        symbols = _get_public_symbols(core_mod)
-
-        for sym_name, sym_obj in symbols.items():
-            if not (inspect.isclass(sym_obj) or inspect.isfunction(sym_obj)):
-                continue
-
-            if sym_name in overrides_for_mod:
-                result.findings.append(
-                    CheckFinding(
-                        check_id="CHECK_1",
-                        tag="[OVERRIDE]",
-                        severity=SEVERITY_OK,
-                        symbol=f"{mod_path}.{sym_name}",
-                        message="Intentionally overridden by BE package.",
-                    )
-                )
-            elif sym_name in pkg_imports:
-                result.findings.append(
-                    CheckFinding(
-                        check_id="CHECK_1",
-                        tag="[OK]",
-                        severity=SEVERITY_OK,
-                        symbol=f"{mod_path}.{sym_name}",
-                        message="Imported and used.",
-                    )
-                )
-            else:
-                result.findings.append(
-                    CheckFinding(
-                        check_id="CHECK_1",
-                        tag="[MISSING]",
-                        severity=SEVERITY_WARNING,
-                        symbol=f"{mod_path}.{sym_name}",
-                        message=(
-                            f"Core symbol '{sym_name}' is neither imported by the BE package "
-                            "nor marked as an intentional override. "
-                            "Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-                        ),
-                    )
-                )
-
-    return result
+_PYPROJECT = Path(__file__).parent.parent / "pyproject.toml"
 
 
 # ---------------------------------------------------------------------------
@@ -333,8 +269,8 @@ def run_check_1() -> CheckResult:
 # ---------------------------------------------------------------------------
 
 _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
-    "validate_invoice_be": "Validate a Peppol BIS 3.0 invoice",
-    "validate_pint_be": "Validate against PINT-BE (NBB) rules",
+    "validate_invoice_be": "Validate a Peppol BIS 3.0 / UBL 2.1 invoice",
+    "validate_pint_be": "Validate against PINT-BE (NBB) business rules",
     "generate_invoice_be": "Generate a UBL 2.1 invoice document",
     "transform_to_ubl": "Transform invoice data to UBL 2.1 XML",
     "lookup_vat_be": "Look up Belgian company via BCE/KBO",
@@ -344,13 +280,9 @@ _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
 
 
 def _collect_registered_tools() -> set[str]:
-    """
-    Detect tool functions that the server registers via mcp.tool()().
-    BE uses bound methods on validator/generator instances plus standalone functions.
-    """
+    """Detect tool functions registered via mcp.tool() in the BE server."""
     registered: set[str] = set()
 
-    # Standalone functions in lookup and transformation modules
     standalone: list[tuple[str, str]] = [
         ("mcp_einvoicing_be.tools.transformation", "transform_to_ubl"),
         ("mcp_einvoicing_be.tools.lookup", "lookup_vat_be"),
@@ -362,7 +294,6 @@ def _collect_registered_tools() -> set[str]:
         if mod and hasattr(mod, fn_name):
             registered.add(fn_name)
 
-    # Methods on BEDocumentValidator
     val_mod, _ = _try_import("mcp_einvoicing_be.tools.validation")
     if val_mod:
         cls = getattr(val_mod, "BEDocumentValidator", None)
@@ -375,7 +306,6 @@ def _collect_registered_tools() -> set[str]:
             except Exception:
                 pass
 
-    # Methods on BEDocumentGenerator
     gen_mod, _ = _try_import("mcp_einvoicing_be.tools.generation")
     if gen_mod:
         cls = getattr(gen_mod, "BEDocumentGenerator", None)
@@ -396,33 +326,27 @@ def run_check_2() -> CheckResult:
     registered = _collect_registered_tools()
 
     for tool_name, description in _REQUIRED_TOOL_CATEGORIES.items():
-        if tool_name in registered:
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_2",
-                    tag="[OK]",
-                    severity=SEVERITY_OK,
-                    symbol=tool_name,
-                    message=f"Tool '{tool_name}' is present. ({description})",
-                )
-            )
-        else:
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_2",
-                    tag="[MISSING_TOOL]",
-                    severity=SEVERITY_BLOCKING,
-                    symbol=tool_name,
-                    message=(
+        tag = "[OK]" if tool_name in registered else "[MISSING_TOOL]"
+        sev = SEVERITY_OK if tool_name in registered else SEVERITY_BLOCKING
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_2",
+                tag=tag,
+                severity=sev,
+                symbol=tool_name,
+                message=(
+                    f"Tool '{tool_name}' is registered. ({description})"
+                    if tool_name in registered
+                    else (
                         f"Required tool '{tool_name}' ({description}) could not be detected. "
                         "Ensure it is defined in the appropriate tools module and registered "
                         "in server.py via mcp.tool()()."
-                    ),
-                )
+                    )
+                ),
             )
+        )
 
-    extra = registered - set(_REQUIRED_TOOL_CATEGORIES)
-    for tool_name in sorted(extra):
+    for tool_name in sorted(registered - set(_REQUIRED_TOOL_CATEGORIES)):
         result.findings.append(
             CheckFinding(
                 check_id="CHECK_2",
@@ -437,29 +361,28 @@ def run_check_2() -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# CHECK 3 — Model field alignment
+# CHECK 3 — Model field alignment (BEInvoice)
 # ---------------------------------------------------------------------------
 
-# Mandatory fields for EN 16931 / PINT-BE that must be present in BEInvoice.
-# Fields marked [Inference] are inherited from InvoiceDocument; exact names
-# should be verified once mcp-einvoicing-core model fields are published.
-# [NEED: derive complete list from mcp-einvoicing-core InvoiceDocument once finalised]
+# EN 16931 / PINT-BE mandatory fields that BEInvoice must expose.
+# BEInvoice currently extends InvoiceDocument (BE-SC-2 pending); field names
+# match InvoiceDocument field names, not EN16931Invoice names.
 _CORE_MANDATORY_FIELDS: dict[str, str] = {
-    "number": "BT-1  — Invoice number (InvoiceDocument.number)",
-    "date": "BT-2  — Invoice issue date (InvoiceDocument.date)",
+    "number": "BT-1  — Invoice number",
+    "date": "BT-2  — Invoice issue date",
     "document_type": "BT-3  — Invoice type code (UNTDID 1001)",
-    "currency": "BT-5  — Invoice currency (InvoiceDocument.currency)",
+    "currency": "BT-5  — Invoice currency",
     "seller": "BG-4  — Seller",
     "buyer": "BG-7  — Buyer",
     "lines": "BG-25 — Invoice lines",
-    "vat_summary": "BG-23 — VAT breakdown (InvoiceDocument.vat_summary)",
+    "vat_summary": "BG-23 — VAT breakdown",
 }
 
 _DEPRECATED_CORE_FIELDS: set[str] = set()
 
 
 def run_check_3() -> CheckResult:
-    """CHECK 3 — Model field alignment."""
+    """CHECK 3 — Model field alignment (BEInvoice)."""
     result = CheckResult(check_id="CHECK_3", name="Model field alignment")
 
     mod, err = _try_import("mcp_einvoicing_be.models.invoice")
@@ -468,8 +391,8 @@ def run_check_3() -> CheckResult:
         result.skip_reason = f"Could not import BE invoice models: {err}"
         return result
 
-    be_invoice_cls = getattr(mod, "BEInvoice", None)
-    if be_invoice_cls is None:
+    invoice_cls = getattr(mod, "BEInvoice", None)
+    if invoice_cls is None:
         result.findings.append(
             CheckFinding(
                 check_id="CHECK_3",
@@ -481,31 +404,24 @@ def run_check_3() -> CheckResult:
         )
         return result
 
-    model_fields = set(be_invoice_cls.model_fields.keys())
+    model_fields = set(invoice_cls.model_fields.keys())
 
     for field_name, description in _CORE_MANDATORY_FIELDS.items():
-        if field_name in model_fields:
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_3",
-                    tag="[OK]",
-                    severity=SEVERITY_OK,
-                    symbol=f"BEInvoice.{field_name}",
-                    message=f"Mandatory field present. {description}",
-                )
+        tag = "[OK]" if field_name in model_fields else "[FIELD_MISSING]"
+        sev = SEVERITY_OK if field_name in model_fields else SEVERITY_BLOCKING
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_3",
+                tag=tag,
+                severity=sev,
+                symbol=f"BEInvoice.{field_name}",
+                message=(
+                    f"Mandatory field present. {description}"
+                    if field_name in model_fields
+                    else f"Mandatory field '{field_name}' ({description}) is absent from BEInvoice."
+                ),
             )
-        else:
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_3",
-                    tag="[FIELD_MISSING]",
-                    severity=SEVERITY_BLOCKING,
-                    symbol=f"BEInvoice.{field_name}",
-                    message=(
-                        f"Mandatory field '{field_name}' ({description}) is absent from BEInvoice."
-                    ),
-                )
-            )
+        )
 
     for dep_field in _DEPRECATED_CORE_FIELDS:
         if dep_field in model_fields:
@@ -526,87 +442,7 @@ def run_check_3() -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# CHECK 4 — Version compatibility
-# ---------------------------------------------------------------------------
-
-
-def _read_core_version_spec_from_pyproject() -> str | None:
-    """Extract the mcp-einvoicing-core version specifier from pyproject.toml."""
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    if not pyproject_path.exists():
-        return None
-    try:
-        text = pyproject_path.read_text(encoding="utf-8")
-        for line in text.splitlines():
-            if "mcp-einvoicing-core" in line:
-                start = line.find("mcp-einvoicing-core")
-                fragment = line[start:].strip().strip('",').strip("'")
-                spec = fragment.replace("mcp-einvoicing-core", "").strip()
-                return spec if spec else None
-    except Exception:
-        pass
-    return None
-
-
-def run_check_4() -> CheckResult:
-    """CHECK 4 — Version compatibility."""
-    result = CheckResult(check_id="CHECK_4", name="Version compatibility")
-
-    installed_core = _get_installed_version("mcp-einvoicing-core")
-    if installed_core is None:
-        result.findings.append(
-            CheckFinding(
-                check_id="CHECK_4",
-                tag="[SKIP]",
-                severity=SEVERITY_WARNING,
-                symbol="mcp-einvoicing-core",
-                message=(
-                    "mcp-einvoicing-core is not installed — cannot check version compatibility."
-                ),
-            )
-        )
-        return result
-
-    declared_spec = _read_core_version_spec_from_pyproject()
-    if declared_spec is None:
-        result.findings.append(
-            CheckFinding(
-                check_id="CHECK_4",
-                tag="[SKIP]",
-                severity=SEVERITY_WARNING,
-                symbol="pyproject.toml",
-                message=(
-                    "Could not parse mcp-einvoicing-core version spec from pyproject.toml. "
-                    "[NEED: ensure pyproject.toml uses standard PEP 440 specifiers]"
-                ),
-            )
-        )
-        return result
-
-    compatible = _version_in_range(installed_core, declared_spec)
-    tag = "[OK]" if compatible else "[VERSION_MISMATCH]"
-    severity = SEVERITY_OK if compatible else SEVERITY_BLOCKING
-
-    result.findings.append(
-        CheckFinding(
-            check_id="CHECK_4",
-            tag=tag,
-            severity=severity,
-            symbol="mcp-einvoicing-core",
-            message=(
-                f"Installed: {installed_core} | "
-                f"Declared range: {declared_spec} | "
-                f"Compatible: {compatible}"
-            ),
-        )
-    )
-
-    return result
-
-
-# ---------------------------------------------------------------------------
 # CHECK 5 — BE-specific structural checks
-# [NEED: extend with additional checks once mcp-einvoicing-core interface is known]
 # ---------------------------------------------------------------------------
 
 
@@ -614,7 +450,7 @@ def run_check_5() -> CheckResult:
     """CHECK 5 — BE-specific structural and completeness checks."""
     result = CheckResult(check_id="CHECK_5", name="BE-specific structural checks")
 
-    # 5a: server.py imports cleanly and exports main + mcp
+    # 5a: server.py imports cleanly and exposes mcp + main
     server_mod, err = _try_import("mcp_einvoicing_be.server")
     if server_mod is None:
         result.findings.append(
@@ -628,26 +464,21 @@ def run_check_5() -> CheckResult:
         )
     else:
         for attr in ("mcp", "main"):
-            if hasattr(server_mod, attr):
-                result.findings.append(
-                    CheckFinding(
-                        check_id="CHECK_5",
-                        tag="[OK]",
-                        severity=SEVERITY_OK,
-                        symbol=f"server.{attr}",
-                        message=f"server.{attr} is present.",
-                    )
+            tag = "[OK]" if hasattr(server_mod, attr) else "[MISSING]"
+            sev = SEVERITY_OK if hasattr(server_mod, attr) else SEVERITY_BLOCKING
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag=tag,
+                    severity=sev,
+                    symbol=f"server.{attr}",
+                    message=(
+                        f"server.{attr} is present."
+                        if hasattr(server_mod, attr)
+                        else f"server.{attr} is missing — required for MCP server operation."
+                    ),
                 )
-            else:
-                result.findings.append(
-                    CheckFinding(
-                        check_id="CHECK_5",
-                        tag="[MISSING]",
-                        severity=SEVERITY_BLOCKING,
-                        symbol=f"server.{attr}",
-                        message=f"server.{attr} is missing — required for MCP server operation.",
-                    )
-                )
+            )
 
         # 5b: mcp must be an EInvoicingMCPServer instance
         mcp_obj = getattr(server_mod, "mcp", None)
@@ -684,29 +515,24 @@ def run_check_5() -> CheckResult:
         required_profiles = {"peppol-bis-3", "pint-be"}
         if cust_ids is not None:
             for profile in sorted(required_profiles):
-                if profile in cust_ids:
-                    result.findings.append(
-                        CheckFinding(
-                            check_id="CHECK_5",
-                            tag="[OK]",
-                            severity=SEVERITY_OK,
-                            symbol=f"CUSTOMIZATION_IDS[{profile!r}]",
-                            message=f"Profile '{profile}' has a CUSTOMIZATION_IDS entry.",
-                        )
-                    )
-                else:
-                    result.findings.append(
-                        CheckFinding(
-                            check_id="CHECK_5",
-                            tag="[MISSING_PROFILE]",
-                            severity=SEVERITY_BLOCKING,
-                            symbol=f"CUSTOMIZATION_IDS[{profile!r}]",
-                            message=(
+                tag = "[OK]" if profile in cust_ids else "[MISSING_PROFILE]"
+                sev = SEVERITY_OK if profile in cust_ids else SEVERITY_BLOCKING
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag=tag,
+                        severity=sev,
+                        symbol=f"CUSTOMIZATION_IDS[{profile!r}]",
+                        message=(
+                            f"Profile '{profile}' has a CUSTOMIZATION_IDS entry."
+                            if profile in cust_ids
+                            else (
                                 f"Required Belgian profile '{profile}' has no entry in "
                                 "CUSTOMIZATION_IDS — UBL generation will be incomplete."
-                            ),
-                        )
+                            )
+                        ),
                     )
+                )
         else:
             result.findings.append(
                 CheckFinding(
@@ -714,9 +540,7 @@ def run_check_5() -> CheckResult:
                     tag="[MISSING]",
                     severity=SEVERITY_BLOCKING,
                     symbol="CUSTOMIZATION_IDS",
-                    message=(
-                        "CUSTOMIZATION_IDS not found in mcp_einvoicing_be.standards.peppol_bis_3."
-                    ),
+                    message="CUSTOMIZATION_IDS not found in mcp_einvoicing_be.standards.peppol_bis_3.",
                 )
             )
 
@@ -737,155 +561,58 @@ def run_check_5() -> CheckResult:
         else:
             pt_fields = set(pt_cls.model_fields.keys())
             for fname in ("iban", "ogm_reference"):
-                if fname in pt_fields:
-                    result.findings.append(
-                        CheckFinding(
-                            check_id="CHECK_5",
-                            tag="[OK]",
-                            severity=SEVERITY_OK,
-                            symbol=f"BEPaymentTerms.{fname}",
-                            message=f"Payment terms field '{fname}' is present.",
-                        )
+                tag = "[OK]" if fname in pt_fields else "[MISSING]"
+                sev = SEVERITY_OK if fname in pt_fields else SEVERITY_WARNING
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag=tag,
+                        severity=sev,
+                        symbol=f"BEPaymentTerms.{fname}",
+                        message=(
+                            f"Payment terms field '{fname}' is present."
+                            if fname in pt_fields
+                            else f"Expected payment terms field '{fname}' is absent."
+                        ),
                     )
-                else:
-                    result.findings.append(
-                        CheckFinding(
-                            check_id="CHECK_5",
-                            tag="[MISSING]",
-                            severity=SEVERITY_WARNING,
-                            symbol=f"BEPaymentTerms.{fname}",
-                            message=f"Expected payment terms field '{fname}' is absent.",
-                        )
-                    )
+                )
 
     return result
 
 
 # ---------------------------------------------------------------------------
-# Report rendering
-# ---------------------------------------------------------------------------
-
-
-def render_summary_table(report: AuditReport) -> str:
-    """Render a human-readable ASCII summary table."""
-    lines: list[str] = []
-    sep = "─" * 80
-
-    lines.append(sep)
-    lines.append("  mcp-einvoicing-be  Pre-publish Audit Report")
-    lines.append(f"  Generated : {report.generated_at}")
-    lines.append(f"  BE version: {report.pkg_version}")
-    lines.append(f"  Core ver  : {report.core_version or 'not installed'}")
-    lines.append(sep)
-
-    for check in report.checks:
-        status = "SKIPPED" if check.skipped else ("PASS" if check.passed else "FAIL")
-        lines.append(f"\n  [{status}] {check.check_id}: {check.name}")
-        if check.skipped:
-            lines.append(f"         ↳ {check.skip_reason}")
-            continue
-        lines.append(
-            f"         Blocking: {check.blocking_count}  "
-            f"Warnings: {check.warning_count}  "
-            f"OK: {sum(1 for f in check.findings if f.severity == SEVERITY_OK)}"
-        )
-        for finding in check.findings:
-            if finding.severity in (SEVERITY_BLOCKING, SEVERITY_WARNING):
-                indent = "    "
-                tag_str = f"{finding.tag:<24}"
-                msg = textwrap.fill(
-                    finding.message,
-                    width=72,
-                    initial_indent=indent + tag_str + " ",
-                    subsequent_indent=indent + " " * 25,
-                )
-                lines.append(msg)
-
-    lines.append(f"\n{sep}")
-    lines.append(
-        f"  TOTAL — Blocking: {report.total_blocking}  "
-        f"Warnings: {report.total_warnings}  "
-        f"Exit code: {report.exit_code}"
-    )
-    verdict = {0: "✅ PASS", 1: "⚠️  WARNINGS", 2: "❌ FAIL"}[report.exit_code]
-    lines.append(f"  Verdict: {verdict}")
-    lines.append(sep)
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
-# Main runner
+# Assembly
 # ---------------------------------------------------------------------------
 
 
 def run_audit() -> AuditReport:
     """Execute all checks and return the aggregated AuditReport. No side effects."""
-    pkg_version = _get_installed_version("mcp-einvoicing-be") or "0.0.0-dev"
-    core_version = _get_installed_version("mcp-einvoicing-core")
+    report = make_report("mcp-einvoicing-be", _PYPROJECT)
 
-    core_compat = True
-    if core_version:
-        spec = _read_core_version_spec_from_pyproject()
-        if spec:
-            core_compat = _version_in_range(core_version, spec)
-
-    report = AuditReport(
-        generated_at=datetime.now(UTC).isoformat(),
-        pkg_version=pkg_version,
-        core_version=core_version,
-        core_version_compatible=core_compat,
+    report.checks.append(
+        run_check_core_coverage(
+            package_name="mcp-einvoicing-be",
+            package_modules=_BE_MODULES,
+            intentional_overrides=_INTENTIONAL_OVERRIDES,
+            is_en16931_family=_IS_EN16931_FAMILY,
+            primary_invoice_class=_PRIMARY_INVOICE_CLASS,
+        )
     )
-
-    report.checks.append(run_check_1())
     report.checks.append(run_check_2())
     report.checks.append(run_check_3())
-    report.checks.append(run_check_4())
+    report.checks.append(
+        run_check_version_compatibility(
+            package_name="mcp-einvoicing-be",
+            pyproject_path=_PYPROJECT,
+        )
+    )
     report.checks.append(run_check_5())
 
     return report
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Pre-publish audit: mcp-einvoicing-be vs mcp-einvoicing-core",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""
-        Exit codes:
-          0  All checks passed
-          1  Warnings only
-          2  Blocking failures (publish should be blocked)
-        """),
-    )
-    parser.add_argument(
-        "--output",
-        metavar="PATH",
-        help="Write JSON report to this path (default: audit/report.json)",
-        default=None,
-    )
-    parser.add_argument(
-        "--fail-on",
-        metavar="LEVEL",
-        choices=["blocking", "warnings", "never"],
-        default="blocking",
-        help=(
-            "When to exit non-zero: "
-            "'blocking' (default) = only on BLOCKING findings; "
-            "'warnings' = on any warning or blocking; "
-            "'never' = always exit 0 (for informational runs)."
-        ),
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Suppress human-readable table; only write JSON.",
-    )
-    return parser.parse_args(argv)
-
-
 def main(argv: list[str] | None = None) -> int:
-    """Entrypoint — returns exit code."""
-    args = _parse_args(argv)
-
+    args = parse_audit_args("Pre-publish audit: mcp-einvoicing-be vs mcp-einvoicing-core", argv)
     report = run_audit()
 
     output_path = Path(args.output) if args.output else Path("audit/report.json")

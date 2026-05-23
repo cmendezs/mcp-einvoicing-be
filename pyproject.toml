@@ -78,7 +78,7 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["N999"]
+ignore = ["N999", "E501"]  # E501: OVERRIDE-REASON comments in audit scripts are intentionally verbose
 
 [tool.mypy]
 python_version = "3.11"

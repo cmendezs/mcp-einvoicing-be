@@ -1,11 +1,12 @@
 {
-  "generated_at": "2026-05-13T09:54:50.594467+00:00",
+  "generated_at": "2026-05-22T20:38:19.094436+00:00",
+  "pkg_name": "mcp-einvoicing-be",
   "pkg_version": "0.1.3",
-  "core_version": "0.6.0",
+  "core_version": "1.2.0",
   "core_version_compatible": true,
-  "exit_code": 1,
+  "exit_code": 0,
   "total_blocking": 0,
-  "total_warnings": 50,
+  "total_warnings": 0,
   "checks": [
     {
       "check_id": "CHECK_1",
@@ -14,434 +15,539 @@
       "skipped": false,
       "skip_reason": "",
       "blocking_count": 0,
-      "warning_count": 50,
+      "warning_count": 0,
       "findings": [
         {
           "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.ABC",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.Any",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.BaseDocumentGenerator",
+          "symbol": "mcp_einvoicing_core.base_server.BaseDocumentGenerator",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.BaseDocumentParser",
-          "message": "Core symbol 'BaseDocumentParser' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.BaseDocumentParser",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.BaseDocumentValidator",
+          "symbol": "mcp_einvoicing_core.base_server.BaseDocumentValidator",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.BaseLifecycleManager",
-          "message": "Core symbol 'BaseLifecycleManager' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.BaseLifecycleManager",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.BasePartyValidator",
-          "message": "Core symbol 'BasePartyValidator' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.BaseModel",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.BasePartyValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.EInvoicingMCPServer",
-          "message": "Imported and used."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EInvoicingError",
-          "message": "Core symbol 'EInvoicingError' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
-          "severity": "OK",
-          "symbol": "mcp_einvoicing_core.ValidationError",
-          "message": "Imported and used."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PartyValidationError",
-          "message": "Core symbol 'PartyValidationError' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
-          "severity": "OK",
-          "symbol": "mcp_einvoicing_core.DocumentGenerationError",
-          "message": "Imported and used."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.XSDValidationError",
-          "message": "Core symbol 'XSDValidationError' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.SchematronValidationError",
-          "message": "Core symbol 'SchematronValidationError' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.AuthenticationError",
-          "message": "Core symbol 'AuthenticationError' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
-          "severity": "OK",
-          "symbol": "mcp_einvoicing_core.PlatformError",
+          "symbol": "mcp_einvoicing_core.base_server.DocumentValidationResult",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.AuthMode",
+          "symbol": "mcp_einvoicing_core.base_server.EInvoicingMCPServer",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.FastMCP",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.Field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.InvoiceDocument",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.BaseEInvoicingClient",
+          "symbol": "mcp_einvoicing_core.base_server.InvoiceParty",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.OAuthConfig",
-          "message": "Core symbol 'OAuthConfig' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.SubmitResult",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.TokenCache",
-          "message": "Core symbol 'TokenCache' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.TaxIdValidationResult",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.abstractmethod",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.assert_not_read_only",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.scrub",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.ABC",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.BaseDocumentSigner",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.XAdESEPESSigner",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.XAdESSignerConfig",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.abstractmethod",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.dataclass",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.datetime",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.safe_fromstring",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.timezone",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.DownloadSpec",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.Path",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.dataclass",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.download_artefacts",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.entry_points",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.download_rules.main",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.BaseModel",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.Decimal",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931Address",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931AllowanceCharge",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931Invoice",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931LineItem",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931Party",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931PaymentMeans",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.EN16931Tax",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.Field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.date",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.field_validator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.en16931.model_validator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.exceptions.AuthenticationError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.TaxIdentifier",
+          "symbol": "mcp_einvoicing_core.exceptions.DocumentGenerationError",
           "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.exceptions.EInvoicingError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.exceptions.PartyValidationError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.PartyAddress",
+          "symbol": "mcp_einvoicing_core.exceptions.PlatformError",
           "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.exceptions.SchematronValidationError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.InvoiceParty",
+          "symbol": "mcp_einvoicing_core.exceptions.ValidationError",
           "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.exceptions.XSDValidationError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.Any",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.InvoiceLineItem",
+          "symbol": "mcp_einvoicing_core.http_client.AuthMode",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.VATSummary",
-          "message": "Core symbol 'VATSummary' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PaymentTerms",
-          "message": "Core symbol 'PaymentTerms' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.AuthenticationError",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.InvoiceDocument",
+          "symbol": "mcp_einvoicing_core.http_client.BaseEInvoicingClient",
           "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.BaseEInvoicingConfig",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.BaseModel",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.BaseSettings",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.Enum",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.Field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.OAuthConfig",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.OAuthValues",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.Path",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.DocumentValidationResult",
+          "symbol": "mcp_einvoicing_core.http_client.PlatformError",
           "message": "Imported and used."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931Address",
-          "message": "Core symbol 'EN16931Address' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931Party",
-          "message": "Core symbol 'EN16931Party' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931Tax",
-          "message": "Core symbol 'EN16931Tax' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931AllowanceCharge",
-          "message": "Core symbol 'EN16931AllowanceCharge' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931LineItem",
-          "message": "Core symbol 'EN16931LineItem' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931PaymentMeans",
-          "message": "Core symbol 'EN16931PaymentMeans' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.EN16931Invoice",
-          "message": "Core symbol 'EN16931Invoice' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.ValidationMessage",
-          "message": "Core symbol 'ValidationMessage' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.ValidationResult",
-          "message": "Imported and used."
+          "symbol": "mcp_einvoicing_core.http_client.TokenCache",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.SchematronValidator",
-          "message": "Core symbol 'SchematronValidator' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PeppolEnvironment",
-          "message": "Core symbol 'PeppolEnvironment' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PeppolParticipantId",
-          "message": "Core symbol 'PeppolParticipantId' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PeppolServiceInfo",
-          "message": "Core symbol 'PeppolServiceInfo' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PeppolLookupResult",
-          "message": "Core symbol 'PeppolLookupResult' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PeppolSMPClient",
-          "message": "Core symbol 'PeppolSMPClient' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.ProfileEntry",
-          "message": "Core symbol 'ProfileEntry' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.ProfileRegistry",
-          "message": "Core symbol 'ProfileRegistry' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.InvoiceFixtureFactory",
-          "message": "Core symbol 'InvoiceFixtureFactory' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.PDFEmbedder",
-          "message": "Core symbol 'PDFEmbedder' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.DownloadSpec",
-          "message": "Core symbol 'DownloadSpec' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.download_artefacts",
-          "message": "Core symbol 'download_artefacts' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.format_amount",
-          "message": "Imported and used."
+          "symbol": "mcp_einvoicing_core.http_client.field_validator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.format_quantity",
-          "message": "Imported and used."
+          "symbol": "mcp_einvoicing_core.http_client.parsedate_to_datetime",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.validate_date_iso",
-          "message": "Core symbol 'validate_date_iso' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
-          "symbol": "mcp_einvoicing_core.validate_iban",
-          "message": "Imported and used."
+          "symbol": "mcp_einvoicing_core.http_client.urlparse",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.xml_element",
-          "message": "Core symbol 'xml_element' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.xml_optional",
-          "message": "Core symbol 'xml_optional' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.format_error",
-          "message": "Core symbol 'format_error' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.filter_empty_values",
-          "message": "Core symbol 'filter_empty_values' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.resolve_xml_input",
-          "message": "Core symbol 'resolve_xml_input' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.generate_qr_png_base64",
-          "message": "Core symbol 'generate_qr_png_base64' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.XAdESSignerConfig",
-          "message": "Core symbol 'XAdESSignerConfig' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.XAdESEPESSigner",
-          "message": "Core symbol 'XAdESEPESSigner' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
-        },
-        {
-          "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.BaseModel",
-          "message": "Core symbol 'BaseModel' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.Decimal",
-          "message": "Core symbol 'Decimal' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
@@ -452,10 +558,10 @@
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.Field",
-          "message": "Core symbol 'Field' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
@@ -487,10 +593,17 @@
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.PaymentTerms",
-          "message": "Core symbol 'PaymentTerms' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.models.TaxIdValidationResult",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
@@ -501,38 +614,339 @@
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.VATSummary",
-          "message": "Core symbol 'VATSummary' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.field_validator",
-          "message": "Core symbol 'field_validator' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.models.model_validator",
-          "message": "Core symbol 'model_validator' is neither imported by the BE package nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[SKIP]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.validators",
-          "message": "Could not import core module: No module named 'mcp_einvoicing_core.validators'"
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.pdf.PDFEmbedder",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[SKIP]",
-          "severity": "WARNING",
-          "symbol": "mcp_einvoicing_core.tools",
-          "message": "Could not import core module: No module named 'mcp_einvoicing_core.tools'"
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.Enum",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PeppolEnvironment",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PeppolLookupResult",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PeppolParticipantId",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PeppolSMPClient",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PeppolServiceInfo",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.PlatformError",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.dataclass",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.safe_fromstring",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.profile_registry.ProfileEntry",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.profile_registry.ProfileRegistry",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.profile_registry.dataclass",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.profile_registry.set_profile_registry",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.qr.generate_qr_png_base64",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.ABC",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.BaseJSONValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.BaseStructuredValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.BaseXSDValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.Path",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.SchematronValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.ValidationMessage",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.ValidationResult",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.abstractmethod",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.dataclass",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.safe_fromstring",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.safe_parser",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.Any",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.Decimal",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.filter_empty_values",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.format_amount",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.format_error",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.format_quantity",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.mark_untrusted",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.mark_untrusted_fields",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.resolve_xml_input",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.safe_fromstring",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.safe_parser",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.validate_date_iso",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.validate_iban",
+          "message": "Imported and used."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.xml_element",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.xml_escape",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.xml_utils.xml_optional",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         }
       ]
     },
@@ -550,49 +964,49 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "validate_invoice_be",
-          "message": "Tool 'validate_invoice_be' is present. (Validate a Peppol BIS 3.0 invoice)"
+          "message": "Tool 'validate_invoice_be' is registered. (Validate a Peppol BIS 3.0 / UBL 2.1 invoice)"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "validate_pint_be",
-          "message": "Tool 'validate_pint_be' is present. (Validate against PINT-BE (NBB) rules)"
+          "message": "Tool 'validate_pint_be' is registered. (Validate against PINT-BE (NBB) business rules)"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "generate_invoice_be",
-          "message": "Tool 'generate_invoice_be' is present. (Generate a UBL 2.1 invoice document)"
+          "message": "Tool 'generate_invoice_be' is registered. (Generate a UBL 2.1 invoice document)"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "transform_to_ubl",
-          "message": "Tool 'transform_to_ubl' is present. (Transform invoice data to UBL 2.1 XML)"
+          "message": "Tool 'transform_to_ubl' is registered. (Transform invoice data to UBL 2.1 XML)"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "lookup_vat_be",
-          "message": "Tool 'lookup_vat_be' is present. (Look up Belgian company via BCE/KBO)"
+          "message": "Tool 'lookup_vat_be' is registered. (Look up Belgian company via BCE/KBO)"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "check_peppol_participant_be",
-          "message": "Tool 'check_peppol_participant_be' is present. (Check Peppol participant registration (BE))"
+          "message": "Tool 'check_peppol_participant_be' is registered. (Check Peppol participant registration (BE))"
         },
         {
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "get_invoice_types_be",
-          "message": "Tool 'get_invoice_types_be' is present. (List supported invoice types and profiles)"
+          "message": "Tool 'get_invoice_types_be' is registered. (List supported invoice types and profiles)"
         }
       ]
     },
@@ -610,14 +1024,14 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "BEInvoice.number",
-          "message": "Mandatory field present. BT-1  \u2014 Invoice number (InvoiceDocument.number)"
+          "message": "Mandatory field present. BT-1  \u2014 Invoice number"
         },
         {
           "check_id": "CHECK_3",
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "BEInvoice.date",
-          "message": "Mandatory field present. BT-2  \u2014 Invoice issue date (InvoiceDocument.date)"
+          "message": "Mandatory field present. BT-2  \u2014 Invoice issue date"
         },
         {
           "check_id": "CHECK_3",
@@ -631,7 +1045,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "BEInvoice.currency",
-          "message": "Mandatory field present. BT-5  \u2014 Invoice currency (InvoiceDocument.currency)"
+          "message": "Mandatory field present. BT-5  \u2014 Invoice currency"
         },
         {
           "check_id": "CHECK_3",
@@ -659,7 +1073,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "BEInvoice.vat_summary",
-          "message": "Mandatory field present. BG-23 \u2014 VAT breakdown (InvoiceDocument.vat_summary)"
+          "message": "Mandatory field present. BG-23 \u2014 VAT breakdown"
         }
       ]
     },
@@ -677,7 +1091,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "mcp-einvoicing-core",
-          "message": "Installed: 0.6.0 | Declared range: >=0.1.0,<1.0.0 | Compatible: True"
+          "message": "Installed: 1.2.0 | Declared range: >=1.1.0,<2.0.0 | Compatible: True"
         }
       ]
     },

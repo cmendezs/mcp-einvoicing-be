@@ -42,7 +42,13 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Install package + dev dependencies
-        run: uv sync --all-extras
+        # --no-sources: ignore [tool.uv.sources] workspace declarations so that
+        # mcp-einvoicing-core is resolved from PyPI (not a monorepo workspace
+        # that does not exist in this standalone repo context).
+        # --upgrade: bypass the committed uv.lock (generated inside the monorepo
+        # workspace where core resolves as a local path) and re-resolve all
+        # packages from PyPI to get the correct pinned versions for CI.
+        run: uv sync --all-extras --no-sources --upgrade
 
       - name: Lint with ruff
         run: uv run ruff check src/mcp_einvoicing_be/ tests/ audit/
@@ -74,7 +80,9 @@ jobs:
         uses: astral-sh/setup-uv@v3
 
       - name: Install package + dev dependencies
-        run: uv sync --all-extras
+        # --no-sources + --upgrade: resolve mcp-einvoicing-core from PyPI, bypassing
+        # the stale committed lock (see test job for full explanation).
+        run: uv sync --all-extras --no-sources --upgrade
 
       - name: Run pre-publish audit
         # Exit code 2 = blocking failures → job fails → publish is blocked

@@ -12,6 +12,7 @@ from decimal import ROUND_HALF_EVEN, Decimal
 from itertools import groupby
 from typing import Any
 
+from lxml import etree
 from mcp_einvoicing_core.en16931 import (
     EN16931Address,
     EN16931Invoice,
@@ -188,9 +189,20 @@ class BEUBLSerializer(EN16931UBLSerializer):
     """
 
     def serialize_be(self, invoice: BEInvoice) -> bytes:
-        """Serialize a BEInvoice to UBL 2.1 XML bytes."""
+        """Serialize a BEInvoice to UBL 2.1 XML bytes (with XML declaration)."""
         en_invoice = _be_invoice_to_en16931(invoice)
         return self.serialize(en_invoice)
+
+    def serialize_be_str(self, invoice: BEInvoice) -> str:
+        """Serialize a BEInvoice to a UBL 2.1 XML string (no XML declaration).
+
+        Use this method when the result will be embedded in a JSON API response
+        or parsed by xml.etree.ElementTree.fromstring(), which does not accept
+        an encoding declaration in a Unicode string input (Python 3.11-3.13).
+        """
+        en_invoice = _be_invoice_to_en16931(invoice)
+        root = self._build_root(en_invoice)
+        return etree.tostring(root, encoding="unicode", pretty_print=True)
 
 
 class BEUBLParser(EN16931UBLParser):
@@ -216,8 +228,8 @@ def render_ubl_invoice(
 ) -> str:
     """Serialize a BEInvoice to a UBL 2.1 XML string.
 
-    Deprecated: use BEUBLSerializer().serialize_be(invoice).decode() instead.
+    Deprecated: use BEUBLSerializer().serialize_be_str(invoice) instead.
     The customization_id and profile_id arguments are accepted for backward
     compatibility but are ignored — the profile is read from invoice.profile.
     """
-    return BEUBLSerializer().serialize_be(invoice).decode("utf-8")
+    return BEUBLSerializer().serialize_be_str(invoice)

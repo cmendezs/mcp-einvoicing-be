@@ -27,7 +27,7 @@ class BEDocumentGenerator(BaseDocumentGenerator):  # type: ignore[misc]
 
     def generate(self, invoice: BEInvoice) -> str:
         """Serialize a ``BEInvoice`` to a UBL 2.1 XML string."""
-        return BEUBLSerializer().serialize_be(invoice).decode("utf-8")
+        return BEUBLSerializer().serialize_be_str(invoice)
 
     async def generate_invoice_be(
         self,

@@ -40,6 +40,6 @@ async def transform_to_ubl(
         elif not validate_iban(iban):
             warnings.append(f"IBAN '{iban}' does not appear to be valid.")
 
-    xml_string = BEUBLSerializer().serialize_be(invoice).decode("utf-8")
+    xml_string = BEUBLSerializer().serialize_be_str(invoice)
 
     return {"xml": xml_string, "warnings": warnings}

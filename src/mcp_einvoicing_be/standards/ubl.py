@@ -1,45 +1,211 @@
-"""UBL 2.1 namespace constants and XML serialization for Belgian e-invoices."""
+"""UBL 2.1 serialization and parsing for Belgian e-invoices.
+
+Subclasses EN16931UBLSerializer / EN16931UBLParser from mcp-einvoicing-core
+(BE-CORE-1: resolves local UBL reimplementation).  A thin adapter converts
+BEInvoice → EN16931Invoice before delegating to the core serializer.
+"""
 
 from __future__ import annotations
 
+from datetime import date
+from decimal import ROUND_HALF_EVEN, Decimal
 from itertools import groupby
 from typing import Any
-from xml.etree.ElementTree import Element, SubElement, register_namespace, tostring
 
-from mcp_einvoicing_core import format_amount, format_quantity
+from mcp_einvoicing_core.en16931 import (
+    EN16931Address,
+    EN16931Invoice,
+    EN16931LineItem,
+    EN16931Party,
+    EN16931PaymentMeans,
+    EN16931Tax,
+)
+from mcp_einvoicing_core.wire_formats import UBL_NSMAP, EN16931UBLParser, EN16931UBLSerializer
 
 from mcp_einvoicing_be.models.invoice import BEInvoice
+from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS
 
-UBL_NAMESPACES: dict[str, str] = {
-    "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
-    "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
-    "ext": "urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2",
-    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
-}
-
-_UBL_INVOICE_NS = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-_CBC = UBL_NAMESPACES["cbc"]
-_CAC = UBL_NAMESPACES["cac"]
-
-for _prefix, _uri in UBL_NAMESPACES.items():
-    register_namespace(_prefix, _uri)
-register_namespace("", _UBL_INVOICE_NS)
+# Keep the legacy alias so existing importers of UBL_NAMESPACES do not break
+# during the migration to BEUBLSerializer.
+UBL_NAMESPACES: dict[str, str] = dict(UBL_NSMAP)
 
 
-def _q(ns: str, local: str) -> str:
-    return f"{{{ns}}}{local}"
+# ---------------------------------------------------------------------------
+# BEInvoice → EN16931Invoice adapter
+# ---------------------------------------------------------------------------
 
 
-def _el(parent: Element, tag: str, text: str) -> Element:
-    child = SubElement(parent, tag)
-    child.text = text
-    return child
+def _be_party_to_en16931(party: Any) -> EN16931Party:
+    addr = party.address
+    if addr is not None:
+        en_addr = EN16931Address(
+            line_one=addr.street,
+            city=addr.city,
+            postcode=addr.postal_code,
+            country_code=addr.country_code,
+            region=getattr(addr, "province", None),
+        )
+    else:
+        en_addr = EN16931Address(line_one="", city="", postcode="", country_code="BE")
+
+    tax_id = getattr(party, "tax_id", None)
+    vat_id = f"{tax_id.country_code}{tax_id.identifier}" if tax_id else None
+
+    peppol_id = getattr(party, "peppol_id", None)
+    peppol_scheme = getattr(party, "peppol_scheme", None) if peppol_id else None
+
+    return EN16931Party(
+        name=party.name
+        or f"{getattr(party, 'first_name', '')} {getattr(party, 'last_name', '')}".strip(),
+        address=en_addr,
+        vat_id=vat_id,
+        electronic_address=peppol_id,
+        electronic_address_scheme=peppol_scheme,
+        contact_name=getattr(party, "contact_name", None),
+        contact_phone=getattr(party, "contact_phone", None),
+        contact_email=getattr(party, "contact_email", None),
+    )
 
 
-def _el_opt(parent: Element, tag: str, text: str | None) -> None:
-    if text:
-        child = SubElement(parent, tag)
-        child.text = text
+def _be_invoice_to_en16931(invoice: BEInvoice) -> EN16931Invoice:
+    """Convert a BEInvoice to the EN16931Invoice expected by core serializers."""
+    profile_urn = CUSTOMIZATION_IDS[invoice.profile]
+
+    seller = _be_party_to_en16931(invoice.seller)
+    buyer = _be_party_to_en16931(invoice.buyer)
+
+    # Line items
+    line_items: list[EN16931LineItem] = []
+    for line in invoice.lines:
+        qty = line.quantity if line.quantity is not None else Decimal("1")
+        line_net = (
+            line.total_price
+            if line.total_price != Decimal("0")
+            else (qty * line.unit_price).quantize(Decimal("0.01"))
+        )
+        line_items.append(
+            EN16931LineItem(
+                line_id=str(line.line_number),
+                name=line.description,
+                description=None,
+                quantity=qty,
+                unit_code=line.unit_code,
+                unit_price=line.unit_price,
+                line_net_amount=line_net,
+                tax_category=line.vat_category.value,
+                tax_rate=line.vat_rate,
+            )
+        )
+
+    # VAT breakdown (group by category + rate, ROUND_HALF_EVEN per EN 16931 §7.4)
+    sorted_lines = sorted(invoice.lines, key=lambda ln: (ln.vat_category.value, float(ln.vat_rate)))
+    tax_lines: list[EN16931Tax] = []
+    for (cat, rate), group_iter in groupby(
+        sorted_lines, key=lambda ln: (ln.vat_category.value, ln.vat_rate)
+    ):
+        group = list(group_iter)
+        taxable = sum(
+            (
+                ln.total_price
+                if ln.total_price != Decimal("0")
+                else (ln.quantity or Decimal("1")) * ln.unit_price
+            )
+            for ln in group
+        ).quantize(Decimal("0.01"))
+        tax_amt = (taxable * Decimal(str(rate)) / Decimal("100")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_EVEN
+        )
+        tax_lines.append(
+            EN16931Tax(
+                category=cat,
+                rate=Decimal(str(rate)),
+                taxable_amount=taxable,
+                tax_amount=tax_amt,
+            )
+        )
+
+    # Document totals
+    sum_lines = sum(li.line_net_amount for li in line_items).quantize(Decimal("0.01"))
+    tax_total = sum(tl.tax_amount for tl in tax_lines).quantize(Decimal("0.01"))
+    tax_incl = (sum_lines + tax_total).quantize(Decimal("0.01"))
+
+    # Payment
+    payment_means: EN16931PaymentMeans | None = None
+    due_date: date | None = None
+    terms = invoice.payment
+    if terms is not None:
+        due_date = date.fromisoformat(terms.due_date) if terms.due_date else None
+        payment_means = EN16931PaymentMeans(
+            type_code=invoice.payment_means_code,
+            iban=terms.iban,
+            bic=terms.bic,
+            payment_id=terms.ogm_reference,
+        )
+    elif invoice.payment_means_code:
+        payment_means = EN16931PaymentMeans(type_code=invoice.payment_means_code)
+
+    invoice_date = (
+        date.fromisoformat(invoice.date) if isinstance(invoice.date, str) else invoice.date
+    )
+
+    return EN16931Invoice(
+        profile=profile_urn,
+        invoice_number=invoice.number,
+        invoice_date=invoice_date,
+        invoice_type_code=invoice.document_type,
+        currency_code=invoice.currency,
+        note=getattr(invoice, "note", None),
+        purchase_order_reference=invoice.order_reference,
+        contract_reference=invoice.contract_reference,
+        seller=seller,
+        buyer=buyer,
+        line_items=line_items,
+        tax_lines=tax_lines,
+        sum_of_line_net_amounts=sum_lines,
+        tax_exclusive_amount=sum_lines,
+        tax_total=tax_total,
+        tax_inclusive_amount=tax_incl,
+        allowances_total=Decimal("0"),
+        charges_total=Decimal("0"),
+        prepaid_amount=Decimal("0"),
+        rounding_amount=Decimal("0"),
+        amount_due=tax_incl,
+        payment_means=payment_means,
+        due_date=due_date,
+    )
+
+
+# ---------------------------------------------------------------------------
+# BE-specific subclasses
+# ---------------------------------------------------------------------------
+
+
+class BEUBLSerializer(EN16931UBLSerializer):
+    """UBL 2.1 serializer for Belgian e-invoices (Peppol BIS 3.0 / PINT-BE).
+
+    Converts BEInvoice to EN16931Invoice via the adapter then delegates to
+    the core EN16931UBLSerializer for XML generation.
+    """
+
+    def serialize_be(self, invoice: BEInvoice) -> bytes:
+        """Serialize a BEInvoice to UBL 2.1 XML bytes."""
+        en_invoice = _be_invoice_to_en16931(invoice)
+        return self.serialize(en_invoice)
+
+
+class BEUBLParser(EN16931UBLParser):
+    """UBL 2.1 parser for Belgian e-invoices.
+
+    Parses the EN 16931 core field set from a Peppol BIS 3.0 / PINT-BE XML
+    document.  Belgian national extensions (OGM reference, 0208 endpoint) are
+    silently ignored at this layer; subclass and override ``_extract`` to add
+    extraction of national fields.
+    """
+
+
+# ---------------------------------------------------------------------------
+# Backward-compatibility shim (deprecated — use BEUBLSerializer instead)
+# ---------------------------------------------------------------------------
 
 
 def render_ubl_invoice(
@@ -48,153 +214,10 @@ def render_ubl_invoice(
     profile_id: str,
     namespaces: dict[str, str],
 ) -> str:
-    """Serialize a ``BEInvoice`` to a UBL 2.1 Invoice XML string."""
-    root = Element(_q(_UBL_INVOICE_NS, "Invoice"))
+    """Serialize a BEInvoice to a UBL 2.1 XML string.
 
-    _el(root, _q(_CBC, "CustomizationID"), customization_id)
-    _el(root, _q(_CBC, "ProfileID"), profile_id)
-    _el(root, _q(_CBC, "ID"), invoice.number)
-    _el(root, _q(_CBC, "IssueDate"), invoice.date)
-    _el(root, _q(_CBC, "InvoiceTypeCode"), invoice.document_type)
-    _el(root, _q(_CBC, "DocumentCurrencyCode"), invoice.currency)
-
-    _el_opt(root, _q(_CBC, "Note"), getattr(invoice, "note", None))
-
-    if invoice.order_reference:
-        order_ref = SubElement(root, _q(_CAC, "OrderReference"))
-        _el(order_ref, _q(_CBC, "ID"), invoice.order_reference)
-
-    if invoice.contract_reference:
-        contract_ref = SubElement(root, _q(_CAC, "ContractDocumentReference"))
-        _el(contract_ref, _q(_CBC, "ID"), invoice.contract_reference)
-
-    _render_party(root, "AccountingSupplierParty", invoice.seller)
-    _render_party(root, "AccountingCustomerParty", invoice.buyer)
-
-    _render_payment_means(root, invoice)
-
-    if invoice.payment and invoice.payment.due_date:
-        pt = SubElement(root, _q(_CAC, "PaymentTerms"))
-        _el(pt, _q(_CBC, "Note"), f"Due: {invoice.payment.due_date}")
-
-    _render_tax_total(root, invoice)
-    _render_legal_monetary_total(root, invoice)
-
-    for idx, line in enumerate(invoice.lines, start=1):
-        line_el = SubElement(root, _q(_CAC, "InvoiceLine"))
-        _el(line_el, _q(_CBC, "ID"), str(idx))
-        qty_el = _el(line_el, _q(_CBC, "InvoicedQuantity"), format_quantity(line.quantity or 0))
-        qty_el.set("unitCode", line.unit_code)
-        ext_el = _el(
-            line_el,
-            _q(_CBC, "LineExtensionAmount"),
-            format_amount((line.quantity or 0) * line.unit_price),
-        )
-        ext_el.set("currencyID", invoice.currency)
-        item_el = SubElement(line_el, _q(_CAC, "Item"))
-        _el(item_el, _q(_CBC, "Description"), line.description)
-        _el_opt(  # noqa: E501
-            item_el, _q(_CBC, "SellersItemIdentification"), getattr(line, "buyer_item_id", None)
-        )
-        cls_tax = SubElement(item_el, _q(_CAC, "ClassifiedTaxCategory"))
-        _el(cls_tax, _q(_CBC, "ID"), line.vat_category.value)
-        _el(cls_tax, _q(_CBC, "Percent"), str(line.vat_rate))
-        ts = SubElement(cls_tax, _q(_CAC, "TaxScheme"))
-        _el(ts, _q(_CBC, "ID"), "VAT")
-        price_el = SubElement(line_el, _q(_CAC, "Price"))
-        price_amt = _el(price_el, _q(_CBC, "PriceAmount"), format_amount(line.unit_price))
-        price_amt.set("currencyID", invoice.currency)
-
-    return tostring(root, encoding="unicode", xml_declaration=False)
-
-
-def _render_party(root: Element, wrapper_tag: str, party: Any) -> None:
-    wrapper = SubElement(root, _q(_CAC, wrapper_tag))
-    party_el = SubElement(wrapper, _q(_CAC, "Party"))
-
-    peppol_id = getattr(party, "peppol_id", None)
-    if peppol_id:
-        ep = _el(party_el, _q(_CBC, "EndpointID"), peppol_id)
-        ep.set("schemeID", getattr(party, "peppol_scheme", "0208"))
-
-    tax_id = getattr(party, "tax_id", None)
-    vat = f"{tax_id.country_code}{tax_id.identifier}" if tax_id else None
-    if vat:
-        pts = SubElement(party_el, _q(_CAC, "PartyTaxScheme"))
-        _el(pts, _q(_CBC, "CompanyID"), vat)
-        ts = SubElement(pts, _q(_CAC, "TaxScheme"))
-        _el(ts, _q(_CBC, "ID"), "VAT")
-
-    legal = SubElement(party_el, _q(_CAC, "PartyLegalEntity"))
-    _el(legal, _q(_CBC, "RegistrationName"), party.name)
-
-    addr = party.address
-    address_el = SubElement(party_el, _q(_CAC, "PostalAddress"))
-    _el(address_el, _q(_CBC, "StreetName"), addr.street)
-    _el_opt(address_el, _q(_CBC, "AdditionalStreetName"), getattr(addr, "additional_street", None))
-    _el(address_el, _q(_CBC, "CityName"), addr.city)
-    _el(address_el, _q(_CBC, "PostalZone"), addr.postal_code)
-    country_el = SubElement(address_el, _q(_CAC, "Country"))
-    _el(country_el, _q(_CBC, "IdentificationCode"), addr.country_code)
-
-
-def _render_payment_means(root: Element, invoice: BEInvoice) -> None:
-    pm = SubElement(root, _q(_CAC, "PaymentMeans"))
-    _el(pm, _q(_CBC, "PaymentMeansCode"), invoice.payment_means_code)
-
-    terms = invoice.payment
-    if terms:
-        _el_opt(pm, _q(_CBC, "PaymentID"), terms.ogm_reference)
-        if terms.iban:
-            payee = SubElement(pm, _q(_CAC, "PayeeFinancialAccount"))
-            _el(payee, _q(_CBC, "ID"), terms.iban)
-            if terms.bic:
-                fi = SubElement(payee, _q(_CAC, "FinancialInstitutionBranch"))
-                _el(fi, _q(_CBC, "ID"), terms.bic)
-
-
-def _render_tax_total(root: Element, invoice: BEInvoice) -> None:
-    tax_total_el = SubElement(root, _q(_CAC, "TaxTotal"))
-    total_vat = sum(
-        round((ln.quantity or 0) * ln.unit_price * ln.vat_rate / 100, 2) for ln in invoice.lines
-    )
-    vat_el = _el(tax_total_el, _q(_CBC, "TaxAmount"), format_amount(total_vat))
-    vat_el.set("currencyID", invoice.currency)
-
-    sorted_lines = sorted(invoice.lines, key=lambda ln: (ln.vat_rate, ln.vat_category.value))
-    for (rate, category), group_iter in groupby(
-        sorted_lines, key=lambda ln: (ln.vat_rate, ln.vat_category.value)
-    ):
-        group = list(group_iter)
-        taxable = sum(round((ln.quantity or 0) * ln.unit_price, 2) for ln in group)
-        tax_amt = sum(
-            round((ln.quantity or 0) * ln.unit_price * ln.vat_rate / 100, 2) for ln in group
-        )
-        sub = SubElement(tax_total_el, _q(_CAC, "TaxSubtotal"))
-        ta = _el(sub, _q(_CBC, "TaxableAmount"), format_amount(taxable))
-        ta.set("currencyID", invoice.currency)
-        tv = _el(sub, _q(_CBC, "TaxAmount"), format_amount(tax_amt))
-        tv.set("currencyID", invoice.currency)
-        cat = SubElement(sub, _q(_CAC, "TaxCategory"))
-        _el(cat, _q(_CBC, "ID"), category)
-        _el(cat, _q(_CBC, "Percent"), str(rate))
-        ts = SubElement(cat, _q(_CAC, "TaxScheme"))
-        _el(ts, _q(_CBC, "ID"), "VAT")
-
-
-def _render_legal_monetary_total(root: Element, invoice: BEInvoice) -> None:
-    total_el = SubElement(root, _q(_CAC, "LegalMonetaryTotal"))
-    line_ext = sum(round((ln.quantity or 0) * ln.unit_price, 2) for ln in invoice.lines)
-    vat_total = sum(
-        round((ln.quantity or 0) * ln.unit_price * ln.vat_rate / 100, 2) for ln in invoice.lines
-    )
-    payable = line_ext + vat_total
-
-    for tag, value in [
-        ("LineExtensionAmount", line_ext),
-        ("TaxExclusiveAmount", line_ext),
-        ("TaxInclusiveAmount", payable),
-        ("PayableAmount", payable),
-    ]:
-        el = _el(total_el, _q(_CBC, tag), format_amount(value))
-        el.set("currencyID", invoice.currency)
+    Deprecated: use BEUBLSerializer().serialize_be(invoice).decode() instead.
+    The customization_id and profile_id arguments are accepted for backward
+    compatibility but are ignored — the profile is read from invoice.profile.
+    """
+    return BEUBLSerializer().serialize_be(invoice).decode("utf-8")

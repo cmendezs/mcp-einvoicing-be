@@ -106,15 +106,8 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "entry_points",
     },
     "mcp_einvoicing_core.en16931": {
-        # OVERRIDE-REASON: BEInvoice(InvoiceDocument) pending migration to EN16931Invoice (BE-SC-2 Sprint 2);
-        # EN16931 model tree not yet adopted by the BE package [GAP id=BE-SC-2]
-        "EN16931Invoice",
-        "EN16931Address",
-        "EN16931Party",
-        "EN16931Tax",
+        # OVERRIDE-REASON: EN16931AllowanceCharge not used in the BEInvoice adapter (no allowances/charges in base BEInvoice)
         "EN16931AllowanceCharge",
-        "EN16931LineItem",
-        "EN16931PaymentMeans",
         # OVERRIDE-REASON: stdlib/third-party re-exports in en16931; BE imports from pydantic/stdlib directly
         "BaseModel",
         "Decimal",
@@ -221,6 +214,10 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "safe_parser",
     },
     "mcp_einvoicing_core.xml_utils": {
+        # OVERRIDE-REASON: BE-CORE-1: format_amount/format_quantity are now used internally by EN16931UBLSerializer (core);
+        # BEUBLSerializer delegates to core's serialize() so these helpers are no longer imported directly by BE
+        "format_amount",
+        "format_quantity",
         # OVERRIDE-REASON: BE UBL serializer uses its own lxml helper functions in standards/ubl.py; core xml_element/xml_optional not used
         "xml_element",
         "xml_optional",

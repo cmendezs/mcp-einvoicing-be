@@ -6,7 +6,7 @@ from mcp_einvoicing_core import BaseDocumentGenerator, DocumentGenerationError
 
 from mcp_einvoicing_be.models.invoice import BEInvoice
 from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
-from mcp_einvoicing_be.standards.ubl import UBL_NAMESPACES, render_ubl_invoice
+from mcp_einvoicing_be.standards.ubl import BEUBLSerializer
 
 ProfileLiteral = Literal["peppol-bis-3", "pint-be"]
 
@@ -27,12 +27,7 @@ class BEDocumentGenerator(BaseDocumentGenerator):  # type: ignore[misc]
 
     def generate(self, invoice: BEInvoice) -> str:
         """Serialize a ``BEInvoice`` to a UBL 2.1 XML string."""
-        return render_ubl_invoice(
-            invoice=invoice,
-            customization_id=CUSTOMIZATION_IDS[invoice.profile],
-            profile_id=PROFILE_IDS[invoice.profile],
-            namespaces=UBL_NAMESPACES,
-        )
+        return BEUBLSerializer().serialize_be(invoice).decode("utf-8")
 
     async def generate_invoice_be(
         self,

@@ -5,8 +5,7 @@ from typing import Annotated, Any
 from mcp_einvoicing_core import validate_iban
 
 from mcp_einvoicing_be.models.invoice import BEInvoice
-from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
-from mcp_einvoicing_be.standards.ubl import UBL_NAMESPACES, render_ubl_invoice
+from mcp_einvoicing_be.standards.ubl import BEUBLSerializer
 
 
 async def transform_to_ubl(
@@ -41,11 +40,6 @@ async def transform_to_ubl(
         elif not validate_iban(iban):
             warnings.append(f"IBAN '{iban}' does not appear to be valid.")
 
-    xml_string = render_ubl_invoice(
-        invoice=invoice,
-        customization_id=CUSTOMIZATION_IDS["peppol-bis-3"],
-        profile_id=PROFILE_IDS["peppol-bis-3"],
-        namespaces=UBL_NAMESPACES,
-    )
+    xml_string = BEUBLSerializer().serialize_be(invoice).decode("utf-8")
 
     return {"xml": xml_string, "warnings": warnings}

@@ -1,6 +1,14 @@
-"""Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core."""
+"""Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core.
 
-from typing import Annotated, Literal, cast
+BE-SC-1 (resolved): _evaluate_rule now performs real lxml XPath evaluation
+against the parsed document tree, so every invoice is checked against the
+hand-coded rule set rather than unconditionally passing.
+
+BE-SH-1 (resolved via core serializer): XML escaping is handled by lxml in the
+EN16931UBLSerializer used by BEUBLSerializer; no manual escaping is needed here.
+"""
+
+from typing import Annotated, Any, Literal, cast
 
 from mcp_einvoicing_core import (
     BaseDocumentValidator,
@@ -12,6 +20,16 @@ from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
 from mcp_einvoicing_be.standards.pint_be import PINT_BE_RULES
 from mcp_einvoicing_be.utils.helpers import parse_ubl_xml
+
+# UBL 2.1 namespace map for lxml XPath evaluation.
+# Rules in PEPPOL_BIS3_RULES use absolute XPath starting with /Invoice/…;
+# the evaluator strips the /Invoice/ prefix and evaluates relative to the
+# Invoice root element to handle both namespace-qualified and unqualified roots.
+_UBL_NSMAP: dict[str, str] = {
+    "ubl": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+    "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+}
 
 ProfileLiteral = Literal["peppol-bis-3", "pint-be", "mercurius"]
 
@@ -26,20 +44,22 @@ class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
     """Belgian document validator.
 
     Subclasses ``BaseDocumentValidator`` and implements ``validate()`` for UBL 2.1
-    documents against the three Belgian profiles.
+    documents against the three Belgian profiles using lxml XPath rule evaluation.
     """
 
     def get_schema_version(self) -> str:
         return "Peppol BIS 3.0 / EN16931"
 
     def validate(self, document_content: str | bytes) -> DocumentValidationResult:
-        return self._validate_with_profile(
-            document_content if isinstance(document_content, str) else document_content.decode(),
-            profile="peppol-bis-3",
+        xml = (
+            document_content
+            if isinstance(document_content, str)
+            else document_content.decode("utf-8", errors="replace")
         )
+        return self._validate_with_profile(xml, profile="peppol-bis-3")
 
     def _validate_with_profile(self, xml: str, profile: str) -> DocumentValidationResult:
-        """Core validation logic."""
+        """Core validation logic — parses the document then evaluates each rule."""
         root, parse_error = parse_ubl_xml(xml)
         if parse_error:
             return DocumentValidationResult(
@@ -56,7 +76,7 @@ class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
         for rule in rules:
             violation = self._evaluate_rule(root, rule)
             if violation:
-                msg = f"{rule.get('rule_id', 'RULE')}: {violation}"
+                msg = f"{rule.get('id', 'RULE')}: {violation}"
                 if rule["severity"] == "error":
                     errors.append(msg)
                 else:
@@ -93,24 +113,73 @@ class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
         self,
         xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
     ) -> dict[str, object]:
-        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium
-        (NBB).
+        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium.
 
         PINT-BE is the Belgian PINT (Peppol International) extension that adds
-        country-specific mandatory elements on top of EN 16931. Rule IDs follow
+        country-specific mandatory elements on top of EN 16931.  Rule IDs follow
         the PINT-BE-Rxxx naming convention from the NBB specification.
+        Note: PINT-BE is not mandated by the Royal Decree of 8 July 2025; it is an
+        optional enrichment for specific use cases.
         """
         return await self.validate_invoice_be(xml=xml, profile="pint-be")
 
     def _evaluate_rule(
         self,
-        root: object,
+        root: Any,
         rule: dict[str, str],
     ) -> str | None:
-        """Evaluate a single XPath-based business rule against a parsed XML tree.
+        """Evaluate a single XPath-based business rule against a parsed lxml element tree.
 
-        Returns a violation message if the rule fails, None if it passes.
-        Delegates to the core Schematron engine when available; stubs pass
-        during scaffolding.
+        BE-SC-1 (resolved): real lxml XPath evaluation replaces the unconditional
+        None stub.  A rule fails when the required element is absent (empty result
+        list) or has no text content.
+
+        Args:
+            root:  lxml ``_Element`` returned by ``parse_ubl_xml``.
+            rule:  Dict with keys ``id``, ``severity``, ``xpath``, ``message``.
+
+        Returns:
+            A violation message string if the rule fails, ``None`` if it passes.
         """
-        return None
+        from lxml import etree  # noqa: PLC0415
+
+        if not isinstance(root, etree._Element):  # noqa: SLF001
+            return None
+
+        xpath_expr = rule.get("xpath", "")
+        if not xpath_expr:
+            return None
+
+        # Rules store absolute paths rooted at /Invoice/…  Convert to a relative
+        # XPath evaluated from the Invoice root element so the expression works
+        # regardless of whether the document uses a UBL namespace or no namespace.
+        rel_xpath = xpath_expr
+        if rel_xpath.startswith("/Invoice/"):
+            rel_xpath = rel_xpath[len("/Invoice/") :]
+        elif rel_xpath == "/Invoice":
+            rel_xpath = "."
+
+        try:
+            results = root.xpath(rel_xpath, namespaces=_UBL_NSMAP)
+        except etree.XPathError as exc:
+            return f"XPath evaluation error for rule {rule.get('id', '')}: {exc}"
+
+        if not results:
+            return rule.get("message", f"Rule {rule.get('id', '')} failed: element not found")
+
+        # The element exists; check that it is not empty (has text content or children)
+        for item in results:
+            if isinstance(item, str):
+                if item.strip():
+                    return None  # non-empty text node
+            elif hasattr(item, "text"):
+                if (item.text and item.text.strip()) or len(item):
+                    return None  # element with text or child elements
+            else:
+                return None  # attribute value or other non-empty XPath result
+
+        # All matched nodes were empty
+        return rule.get(
+            "message",
+            f"Rule {rule.get('id', '')} failed: element present but empty",
+        )

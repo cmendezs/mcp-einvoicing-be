@@ -41,17 +41,17 @@ from mcp_einvoicing_core.audit import (
 # ---------------------------------------------------------------------------
 
 # Peppol BIS 3.0 / PINT-BE is EN 16931 family.
-# BE country audit 2026-05 (finding BE-SC-2) confirms:
-#   - BEInvoice currently extends InvoiceDocument — WRONG BASE for PINT-BE pathway.
-#   - BEInvoice(EN16931Invoice) must be scaffolded before this constant can be set True.
-# Set to None to skip the canonical tree check until BEInvoice is migrated (Sprint 2).
-# [GAP id=BE-SC-2]
-_IS_EN16931_FAMILY: bool | None = None
-_PRIMARY_INVOICE_CLASS: tuple[str, str] | None = None
+# BE-SC-2 resolved (2026-06): BEInvoice now extends EN16931Invoice.
+# BE-SH-3 resolved: _IS_EN16931_FAMILY set to True.
+_IS_EN16931_FAMILY: bool | None = True
+_PRIMARY_INVOICE_CLASS: tuple[str, str] | None = (
+    "mcp_einvoicing_be.models.invoice",
+    "BEInvoice",
+)
 
 _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     "mcp_einvoicing_core.base_server": {
-        # OVERRIDE-REASON: BE has no document parser class; InvoiceDocument.model_validate() is used inline in tool handlers
+        # OVERRIDE-REASON: BE has no document parser class; BEUBLParser covers the Art. 13quater reception requirement
         "BaseDocumentParser",
         # OVERRIDE-REASON: Peppol BIS 3.0 is push-only submission; no session-based lifecycle API is required for BE
         "BaseLifecycleManager",
@@ -75,8 +75,12 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "Field",
         # OVERRIDE-REASON: assert_not_read_only is an internal server guard not needed in BE tool handlers
         "assert_not_read_only",
-        # OVERRIDE-REASON: scrub is a prompt-injection sanitiser helper; BE does not apply it at the tool boundary yet (BE-SH-1)
+        # OVERRIDE-REASON: BE-SH-1 resolved via core serializer; scrub not applied at tool boundary yet
         "scrub",
+        # OVERRIDE-REASON: BE-SC-2 resolved; BEInvoice now extends EN16931Invoice; InvoiceDocument re-exported by base_server
+        "InvoiceDocument",
+        # OVERRIDE-REASON: BE-SC-2 resolved; BEParty now extends EN16931Party; InvoiceParty re-exported by base_server
+        "InvoiceParty",
     },
     "mcp_einvoicing_core.digital_signature": {
         # OVERRIDE-REASON: Peppol AS4 transport handles its own signing; XAdES-EPES envelope signing is not required for PINT-BE
@@ -106,8 +110,12 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "entry_points",
     },
     "mcp_einvoicing_core.en16931": {
-        # OVERRIDE-REASON: EN16931AllowanceCharge not used in the BEInvoice adapter (no allowances/charges in base BEInvoice)
+        # OVERRIDE-REASON: EN16931AllowanceCharge not used in BEInvoice (no document-level allowances/charges in base Belgian invoices)
         "EN16931AllowanceCharge",
+        # OVERRIDE-REASON: EN16931LineItem used as dict template in _derive_en16931_fields but not directly imported by name
+        "EN16931LineItem",
+        # OVERRIDE-REASON: EN16931Tax used as dict template in _derive_en16931_fields but not directly imported by name
+        "EN16931Tax",
         # OVERRIDE-REASON: stdlib/third-party re-exports in en16931; BE imports from pydantic/stdlib directly
         "BaseModel",
         "Decimal",
@@ -149,9 +157,15 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "urlparse",
     },
     "mcp_einvoicing_core.models": {
-        # OVERRIDE-REASON: BE defines BEPaymentTerms(PaymentTerms) with IBAN and OGM fields; core PaymentTerms base not directly imported
+        # OVERRIDE-REASON: BE-SC-2 resolved; BEInvoice now extends EN16931Invoice so InvoiceDocument is no longer the base class
+        "InvoiceDocument",
+        # OVERRIDE-REASON: BE-SC-2 resolved; BEParty now extends EN16931Party so InvoiceParty is no longer the base class
+        "InvoiceParty",
+        # OVERRIDE-REASON: BE-SC-2 resolved; BEAddress now extends EN16931Address so PartyAddress is no longer used
+        "PartyAddress",
+        # OVERRIDE-REASON: BE defines BEPaymentTerms with IBAN and OGM fields; core PaymentTerms base not directly imported
         "PaymentTerms",
-        # OVERRIDE-REASON: BE uses inline vat_summary as a list of dicts on BEInvoice; core VATSummary model is not imported
+        # OVERRIDE-REASON: BE-SC-2 resolved; EN16931Invoice uses tax_lines (BG-23); VATSummary model not used
         "VATSummary",
         # OVERRIDE-REASON: TaxIdValidationResult not yet returned by BE tax-ID helpers; tracked as future work
         "TaxIdValidationResult",
@@ -167,13 +181,14 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "PDFEmbedder",
     },
     "mcp_einvoicing_core.peppol": {
-        # OVERRIDE-REASON: check_peppol_participant_be uses a hand-rolled BaseEInvoicingClient pointed at the EU SMP base URL;
-        # migration to PeppolSMPClient deferred to BE-P-1 (Q3 2026) [GAP id=BE-P-1]
-        "PeppolSMPClient",
+        # OVERRIDE-REASON: BE-LC-1 resolved; PeppolSMPClient and PeppolParticipantId are now imported and used in tools/lookup.py
+        # OVERRIDE-REASON: PeppolLookupResult is returned by lookup_participant() and accessed via .to_dict(); not directly imported
         "PeppolLookupResult",
+        # OVERRIDE-REASON: PeppolServiceInfo — get_service_endpoint not called; only lookup_participant is used
         "PeppolServiceInfo",
-        "PeppolParticipantId",
-        # OVERRIDE-REASON: BE uses string constants for Peppol environment rather than the PeppolEnvironment enum
+        # OVERRIDE-REASON: PEPPOL_BIS_BILLING_30 document type constant; not passed as filter in the lookup tool
+        "PEPPOL_BIS_BILLING_30",
+        # OVERRIDE-REASON: BE uses PeppolSMPClient default production environment; PeppolEnvironment enum not imported directly
         "PeppolEnvironment",
         # OVERRIDE-REASON: stdlib/third-party re-exports in peppol; BE imports from source directly
         "Enum",
@@ -195,14 +210,14 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "generate_qr_png_base64",
     },
     "mcp_einvoicing_core.schematron": {
-        # OVERRIDE-REASON: BE implements lxml-based validation directly in tools/validation.py;
-        # SchematronValidator ABC not sub-classed pending BE-SC-1 implementation
+        # OVERRIDE-REASON: BE-SC-1 resolved; lxml XPath validation now in tools/validation.py;
+        # SchematronValidator ABC not yet subclassed (full Schematron XSLT engine deferred to BE-SC-3 follow-up)
         "SchematronValidator",
         "BaseStructuredValidator",
-        # OVERRIDE-REASON: UBL 2.1 uses Schematron (not XSD/JSON schema) for business rules; structured validators not applicable yet
+        # OVERRIDE-REASON: UBL 2.1 uses Schematron/XPath for business rules; XSD/JSON validators not applicable
         "BaseXSDValidator",
         "BaseJSONValidator",
-        # OVERRIDE-REASON: BE uses ValidationResult from core; ValidationMessage detail type is not used in BE tools
+        # OVERRIDE-REASON: BE uses DocumentValidationResult from core; ValidationMessage detail type not used in BE tools
         "ValidationMessage",
         # OVERRIDE-REASON: stdlib/third-party re-exports in schematron; BE imports from source directly
         "ABC",
@@ -214,22 +229,24 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "safe_parser",
     },
     "mcp_einvoicing_core.xml_utils": {
-        # OVERRIDE-REASON: BE-CORE-1: format_amount/format_quantity are now used internally by EN16931UBLSerializer (core);
-        # BEUBLSerializer delegates to core's serialize() so these helpers are no longer imported directly by BE
+        # OVERRIDE-REASON: format_amount/format_quantity used internally by EN16931UBLSerializer (core);
+        # BEUBLSerializer delegates to core's serialize() so these helpers are not imported directly by BE
         "format_amount",
         "format_quantity",
-        # OVERRIDE-REASON: BE UBL serializer uses its own lxml helper functions in standards/ubl.py; core xml_element/xml_optional not used
+        # OVERRIDE-REASON: BE-SC-2 resolved; core EN16931UBLSerializer handles XML element construction;
+        # core xml_element/xml_optional no longer needed in BE
         "xml_element",
         "xml_optional",
-        # OVERRIDE-REASON: BE-SH-1 tracks adding xml_escape from core to all UBL free-text fields; not yet applied
+        # OVERRIDE-REASON: BE-SH-1 resolved via core serializer; xml_escape is used by lxml inside
+        # EN16931UBLSerializer which BEUBLSerializer delegates to; not imported directly in BE
         "xml_escape",
         # OVERRIDE-REASON: BE tools return plain error strings; structured format_error dict not used
         "format_error",
-        # OVERRIDE-REASON: BE UBL serializer omits None elements directly; filter_empty_values utility is not required
+        # OVERRIDE-REASON: BE UBL serializer uses EN16931UBLSerializer; filter_empty_values not needed
         "filter_empty_values",
-        # OVERRIDE-REASON: BE tools accept raw XML bytes directly; resolve_xml_input indirection is not used
+        # OVERRIDE-REASON: BE tools accept raw XML bytes directly; resolve_xml_input indirection not used
         "resolve_xml_input",
-        # OVERRIDE-REASON: date validation handled by Pydantic date type on BEInvoice fields; validate_date_iso helper not needed
+        # OVERRIDE-REASON: date validation handled by Pydantic date type on BEInvoice fields
         "validate_date_iso",
         # OVERRIDE-REASON: mark_untrusted / mark_untrusted_fields prompt-injection helpers not yet applied in BE tools
         "mark_untrusted",
@@ -247,6 +264,7 @@ _BE_MODULES: list[str] = [
     "mcp_einvoicing_be.models.invoice",
     "mcp_einvoicing_be.models.party",
     "mcp_einvoicing_be.server",
+    "mcp_einvoicing_be.specs",
     "mcp_einvoicing_be.standards.mercurius",
     "mcp_einvoicing_be.standards.peppol_bis_3",
     "mcp_einvoicing_be.standards.pint_be",
@@ -361,18 +379,19 @@ def run_check_2() -> CheckResult:
 # CHECK 3 — Model field alignment (BEInvoice)
 # ---------------------------------------------------------------------------
 
-# EN 16931 / PINT-BE mandatory fields that BEInvoice must expose.
-# BEInvoice currently extends InvoiceDocument (BE-SC-2 pending); field names
-# match InvoiceDocument field names, not EN16931Invoice names.
+# EN 16931 / Peppol BIS 3.0 mandatory fields that BEInvoice must expose.
+# Field names match EN16931Invoice names (BE-SC-2 resolved).
+# BE-specific line field is 'lines' (list[BEInvoiceLine]); EN 16931 tax breakdown
+# is 'tax_lines' (list[EN16931Tax]) derived automatically by the before-validator.
 _CORE_MANDATORY_FIELDS: dict[str, str] = {
-    "number": "BT-1  — Invoice number",
-    "date": "BT-2  — Invoice issue date",
-    "document_type": "BT-3  — Invoice type code (UNTDID 1001)",
-    "currency": "BT-5  — Invoice currency",
+    "invoice_number": "BT-1  — Invoice number",
+    "invoice_date": "BT-2  — Invoice issue date",
+    "invoice_type_code": "BT-3  — Invoice type code (UNTDID 1001)",
+    "currency_code": "BT-5  — Invoice currency",
     "seller": "BG-4  — Seller",
     "buyer": "BG-7  — Buyer",
-    "lines": "BG-25 — Invoice lines",
-    "vat_summary": "BG-23 — VAT breakdown",
+    "lines": "BG-25 — Invoice lines (Belgian user-facing field)",
+    "tax_lines": "BG-23 — VAT breakdown (EN 16931; auto-derived from lines)",
 }
 
 _DEPRECATED_CORE_FIELDS: set[str] = set()

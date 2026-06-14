@@ -88,6 +88,11 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # OVERRIDE-REASON: XAdES signing config and signer not needed; Peppol BIS 3.0 uses AS4 transport-level signatures
         "XAdESSignerConfig",
         "XAdESEPESSigner",
+        # OVERRIDE-REASON: XMLDSigSigner/XMLDSigSignerConfig (core v1.4.0) is
+        # the BR NF-e plain enveloped XML-DSig signer; not applicable to
+        # PINT-BE, which is signed at the AS4 transport level
+        "XMLDSigSigner",
+        "XMLDSigSignerConfig",
         # OVERRIDE-REASON: stdlib/third-party re-exports in digital_signature; BE imports these from source directly
         "ABC",
         "abstractmethod",

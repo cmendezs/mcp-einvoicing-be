@@ -1,0 +1,95 @@
+# Release Process for mcp-einvoicing-be
+
+This document describes how to release a new version of `mcp-einvoicing-be` to PyPI and the official MCP registry.
+
+## One-Time Setup Requirements
+
+**PyPI Trusted Publishing:**
+PyPI publishing is fully automated via OIDC (no token stored). The Trusted Publisher is configured on PyPI under `cmendezs/mcp-einvoicing-be`, workflow `publish.yml`, environment `pypi`. No `.env` or secret needed.
+
+**MCP Publisher CLI:**
+Binary installed at `~/.local/bin/mcp-publisher` (already in `PATH`). To update:
+```bash
+curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_darwin_arm64.tar.gz" \
+  | tar xzf - -C ~/.local/bin/
+```
+
+**MCP Registry Authentication:**
+Authenticate once with GitHub (device flow):
+```bash
+mcp-publisher login github
+```
+
+## Release Steps
+
+**Step 1 — Version bump:** update `version` in `pyproject.toml` and `server.json` (top-level and `packages[].version`).
+
+**Step 2 — Commit, tag and push:**
+```bash
+git add pyproject.toml server.json
+git commit -m "release: v{VERSION} — {summary}"
+git push origin main
+git tag v{VERSION}
+git push origin v{VERSION}
+```
+GitHub Actions publishes to PyPI automatically on tag push.
+
+**Step 3 — MCP registry:**
+```bash
+mcp-publisher publish
+```
+
+## Changelog
+
+### [0.2.0] - 2026-06-01
+#### Fixed / Added
+- **[BE-SC-2] BLOCKING:** `BEInvoice` now extends `EN16931Invoice`; `BEParty` extends
+  `EN16931Party`; `BEAddress` extends `EN16931Address`. Belgian field-name aliases via
+  Pydantic `AliasChoices`. A `model_validator(mode="before")` auto-derives EN 16931
+  mandatory totals, `line_items`, and `tax_lines` from Belgian `lines` input.
+- **[BE-SC-3] BLOCKING:** `src/mcp_einvoicing_be/specs/` created with `download.py`
+  (fetches Peppol BIS 3.0 Schematron from OpenPeppol; documents UBL 2.1 XSD sources).
+- **[BE-SC-1] BLOCKING:** `_evaluate_rule` now uses lxml XPath evaluation;
+  `/Invoice/...` absolute XPaths converted to relative paths on the Invoice root element
+  with the full UBL 2.1 namespace map. The unconditional `return None` stub removed.
+  `parse_ubl_xml` in `helpers.py` updated to lxml for namespace-aware parsing.
+- **[BE-TL-1] HIGH:** `normalize_vat_be` validates the modulo-97 check digit
+  (SPF Finances / FOD Financiën algorithm, identical to ISO 7064 MOD 97-10 / IBAN).
+- **[BE-TL-2] HIGH:** `VatCategory` enum gains `REDUCED_12 = "AA"` (12%) and
+  `REDUCED_6 = "AB"` (6%) per UNCL5305.
+- **[BE-TL-3] HIGH:** `vat_rate_to_category` documented as a legacy zero-rate detection
+  helper; docstring explains why callers must set `vat_category` explicitly for 12%/6%
+  and reverse-charge lines.
+- **[BE-SH-1] HIGH:** XML escaping now handled structurally via `EN16931UBLSerializer`
+  (lxml escapes all text content automatically). Old hand-rolled serialiser replaced by
+  a lightweight adapter.
+- **[BE-SH-2] MEDIUM:** `_INTENTIONAL_OVERRIDES` fully populated with `OVERRIDE-REASON:`
+  comments; 0 BLOCKING / 0 WARNINGS in audit gate.
+- **[BE-LC-1] HIGH:** `check_peppol_participant_be` migrated to `PeppolSMPClient` from
+  `mcp-einvoicing-core`; DNS-over-HTTPS U-NAPTR resolution + SMP service-group lookup
+  per Peppol BDMSL specification.
+- 44 tests passing (28 new); audit gate PASS (0 blocking, 0 warnings).
+
+### [0.1.4] - 2026-05-31
+#### Added
+- **[BE-CORE-1]** Replaced the 200-line local `render_ubl_invoice()` with
+  `BEUBLSerializer(EN16931UBLSerializer)` and `BEUBLParser(EN16931UBLParser)` subclasses
+  from `mcp-einvoicing-core` v1.3.0.
+- `_be_invoice_to_en16931()` adapter maps `BEInvoice` fields to `EN16931Invoice`,
+  including VAT totals grouped per EN 16931 §7.4 (ROUND_HALF_EVEN) and Peppol BIS 3.0 /
+  PINT-BE profile URNs.
+- `BEUBLSerializer.serialize_be_str()` for API/tool use (no XML declaration).
+- `render_ubl_invoice()` retained as a deprecated backward-compatibility shim.
+- **[BE-SC-5]** closed: `BEUBLSerializer` inherits `_build_root()` from
+  `EN16931UBLSerializer` which already dispatches `<CreditNote>` root for type code 381.
+- **[BE-SC-7]** closed: local `round(x, 2)` arithmetic replaced by `format_amount()`
+  with `ROUND_HALF_EVEN` throughout.
+- Audit gate: PASS (0 blocking, 0 warnings, 133 OK).
+
+---
+
+## Notes
+
+- The MCP registry does **not** sync automatically with PyPI or GitHub — step 3 is required for every release.
+- The `server.json` description field must be **≤ 100 characters**.
+- PyPI rejects re-uploads of the same version — always bump before tagging.

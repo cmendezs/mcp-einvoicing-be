@@ -12,7 +12,7 @@
 
 ## Inleiding
 
-`mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) die tools aanbiedt voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatieecosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, de **PINT-BE-extensie** (Nationale Bank van Belgie), en het **Mercurius**-netwerk voor facturatie aan de overheidssector. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert.
+`mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) die tools aanbiedt voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatieëcosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, de **PINT-BE-extensie** (Nationale Bank van België), en het **Mercurius**-netwerk voor facturatie aan de overheidssector. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert.
 
 ---
 
@@ -21,7 +21,7 @@
 ### Vereisten
 
 - Python ≥ 3.11
-- [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core) (wordt automatisch geinstalleerd als afhankelijkheid)
+- [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core) (wordt automatisch geïnstalleerd als afhankelijkheid)
 
 ### Met `uv` (aanbevolen)
 
@@ -102,7 +102,7 @@ Retourneert een `ValidationResult` met `valid`, `errors` en `warnings` (elk met 
 
 ### `validate_pint_be`
 
-Valideert een factuur volgens de PINT-BE-specifieke bedrijfsregels gepubliceerd door de Nationale Bank van Belgie (NBB). Past de PINT-BE Schematron-regels toe bovenop de EN 16931-basis.
+Valideert een factuur volgens de PINT-BE-specifieke bedrijfsregels gepubliceerd door de Nationale Bank van België (NBB). Past de PINT-BE Schematron-regels toe bovenop de EN 16931-basis.
 
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
@@ -236,7 +236,7 @@ mcp-einvoicing-be/
 - Peppol-netwerkclient (SMP-opzoeken, SML-resolutie)
 - Gemeenschappelijke Pydantic-basismodellen (`BaseInvoice`, `BaseParty`, `BaseValidationResult`)
 
-`mcp-einvoicing-be` voegt Belgie-specifieke logica toe:
+`mcp-einvoicing-be` voegt België-specifieke logica toe:
 - PINT-BE Schematron-regels (NBB-publicatie)
 - Mercurius-netwerk eindpuntconfiguratie en laagregels
 - BCE/KBO-ondernemingsdatabank-integratie
@@ -269,18 +269,18 @@ Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor volledige richtlijnen.
 
 ---
 
-## Other e-invoicing MCP servers
+## Andere MCP-servers voor e-facturatie
 
-| Country | Server |
+| Land | Server |
 |---------|--------|
 | 🌍 Global | [mcp-einvoicing-core](https://github.com/cmendezs/mcp-einvoicing-core) |
-| 🇧🇪 Belgium | [mcp-einvoicing-be](https://github.com/cmendezs/mcp-einvoicing-be) |
-| 🇧🇷 Brazil | [mcp-nfe-br](https://github.com/cmendezs/mcp-nfe-br) |
-| 🇫🇷 France | [mcp-facture-electronique-fr](https://github.com/cmendezs/mcp-facture-electronique-fr) |
-| 🇩🇪 Germany | [mcp-einvoicing-de](https://github.com/cmendezs/mcp-einvoicing-de) |
-| 🇮🇹 Italy | [mcp-fattura-elettronica-it](https://github.com/cmendezs/mcp-fattura-elettronica-it) |
-| 🇵🇱 Poland | [mcp-ksef-pl](https://github.com/cmendezs/mcp-ksef-pl) |
-| 🇪🇸 Spain | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
+| 🇧🇪 België | [mcp-einvoicing-be](https://github.com/cmendezs/mcp-einvoicing-be) |
+| 🇧🇷 Brazilië | [mcp-nfe-br](https://github.com/cmendezs/mcp-nfe-br) |
+| 🇫🇷 Frankrijk | [mcp-facture-electronique-fr](https://github.com/cmendezs/mcp-facture-electronique-fr) |
+| 🇩🇪 Duitsland | [mcp-einvoicing-de](https://github.com/cmendezs/mcp-einvoicing-de) |
+| 🇮🇹 Italië | [mcp-fattura-elettronica-it](https://github.com/cmendezs/mcp-fattura-elettronica-it) |
+| 🇵🇱 Polen | [mcp-ksef-pl](https://github.com/cmendezs/mcp-ksef-pl) |
+| 🇪🇸 Spanje | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
 
 ---
 

@@ -308,10 +308,7 @@ class BEInvoice(EN16931Invoice):
             type_code=self.payment_means_code,
             iban=terms.iban if terms else None,
             bic=terms.bic if terms else None,
-            account_name=None,
             payment_id=terms.ogm_reference if terms else None,
-            mandate_reference=None,
-            creditor_id=None,
         )
         if terms and terms.due_date and self.due_date is None:
             try:

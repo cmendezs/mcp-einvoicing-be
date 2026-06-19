@@ -1,5 +1,7 @@
 # mcp-einvoicing-be 🇧🇪
 
+[English](README.md) | [Francais](README.fr.md) | [Nederlands](README.nl.md)
+
 <!-- mcp-name: io.github.cmendezs/mcp-einvoicing-be -->
 
 [![PyPI version](https://badge.fury.io/py/mcp-einvoicing-be.svg)](https://badge.fury.io/py/mcp-einvoicing-be)
@@ -11,18 +13,6 @@
 ## Introduction
 
 `mcp-einvoicing-be` is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes tools for Belgian electronic invoicing. It covers the full Belgian e-invoicing ecosystem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, the **PINT-BE extension** (National Bank of Belgium), and the **Mercurius** network for public-sector invoicing. The server is part of the `mcp-einvoicing-*` family of country-specific servers, all built on top of [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), which provides the shared validation engine, UBL abstractions, and Peppol network utilities.
-
----
-
-## Présentation
-
-`mcp-einvoicing-be` est un serveur [MCP (Model Context Protocol)](https://modelcontextprotocol.io) qui expose des outils dédiés à la facturation électronique en Belgique. Il couvre l'ensemble de l'écosystème belge : **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, l'extension **PINT-BE** (Banque Nationale de Belgique) et le réseau **Mercurius** pour les achats publics. Ce serveur s'intègre dans la famille `mcp-einvoicing-*` de serveurs spécifiques à chaque pays, tous construits sur [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), qui fournit le moteur de validation partagé, les abstractions UBL et les utilitaires réseau Peppol. Il permet aux assistants IA de valider, générer et transformer des factures électroniques conformes au droit belge.
-
----
-
-## Voorstelling
-
-`mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) met tools voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatieëcosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, de **PINT-BE-extensie** (Nationale Bank van België) en het **Mercurius**-netwerk voor overheidsopdrachten. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert. AI-assistenten kunnen hiermee Belgische e-facturen valideren, aanmaken en transformeren.
 
 ---
 

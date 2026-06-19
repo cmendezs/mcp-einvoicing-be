@@ -40,7 +40,7 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
-class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
+class BEDocumentValidator(BaseDocumentValidator):
     """Belgian document validator.
 
     Subclasses ``BaseDocumentValidator`` and implements ``validate()`` for UBL 2.1
@@ -168,12 +168,12 @@ class BEDocumentValidator(BaseDocumentValidator):  # type: ignore[misc]
             return rule.get("message", f"Rule {rule.get('id', '')} failed: element not found")
 
         # The element exists; check that it is not empty (has text content or children)
-        for item in results:
+        for item in results:  # type: ignore[union-attr]
             if isinstance(item, str):
                 if item.strip():
                     return None  # non-empty text node
             elif hasattr(item, "text"):
-                if (item.text and item.text.strip()) or len(item):
+                if (item.text and item.text.strip()) or len(item):  # type: ignore[arg-type]
                     return None  # element with text or child elements
             else:
                 return None  # attribute value or other non-empty XPath result

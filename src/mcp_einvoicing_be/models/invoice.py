@@ -49,7 +49,7 @@ class VatCategory(StrEnum):
     REVERSE_CHARGE = "AE"
 
 
-class BEInvoiceLine(InvoiceLineItem):  # type: ignore[misc]
+class BEInvoiceLine(InvoiceLineItem):
     """Belgian invoice line.
 
     Extends ``InvoiceLineItem`` with the EN 16931 VAT category code (UNCL5305)
@@ -91,7 +91,7 @@ class BEPaymentTerms(BaseModel):
     due_date: str | None = Field(default=None, description="Payment due date (YYYY-MM-DD)")
 
 
-class BEInvoice(EN16931Invoice):  # type: ignore[misc]
+class BEInvoice(EN16931Invoice):
     """Belgian e-invoice.
 
     Extends ``EN16931Invoice`` (Peppol BIS 3.0 is a CIUS of EN 16931-1:2017).
@@ -141,12 +141,8 @@ class BEInvoice(EN16931Invoice):  # type: ignore[misc]
 
     # ── Parties — narrow to Belgian party types ───────────────────────────────
 
-    seller: Supplier = Field(  # type: ignore[assignment]
-        ..., description="Seller / supplier (BG-4)"
-    )
-    buyer: Customer = Field(  # type: ignore[assignment]
-        ..., description="Buyer / customer (BG-7)"
-    )
+    seller: Supplier = Field(..., description="Seller / supplier (BG-4)")
+    buyer: Customer = Field(..., description="Buyer / customer (BG-7)")
 
     # ── Belgian invoice lines (user-facing) ──────────────────────────────────
 
@@ -312,7 +308,10 @@ class BEInvoice(EN16931Invoice):  # type: ignore[misc]
             type_code=self.payment_means_code,
             iban=terms.iban if terms else None,
             bic=terms.bic if terms else None,
+            account_name=None,
             payment_id=terms.ogm_reference if terms else None,
+            mandate_reference=None,
+            creditor_id=None,
         )
         if terms and terms.due_date and self.due_date is None:
             try:

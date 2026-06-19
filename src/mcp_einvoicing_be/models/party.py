@@ -49,7 +49,7 @@ class BEParty(EN16931Party):
     model_config = ConfigDict(populate_by_name=True)
 
     # Override address type to BEAddress so street / postal_code aliases work
-    address: BEAddress  # type: ignore[assignment]
+    address: BEAddress
 
     # Structured Belgian VAT/enterprise number — additional field not in EN16931Party
     tax_id: TaxIdentifier | None = Field(

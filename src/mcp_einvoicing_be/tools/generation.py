@@ -11,7 +11,7 @@ from mcp_einvoicing_be.standards.ubl import BEUBLSerializer
 ProfileLiteral = Literal["peppol-bis-3", "pint-be"]
 
 
-class BEDocumentGenerator(BaseDocumentGenerator):  # type: ignore[misc]
+class BEDocumentGenerator(BaseDocumentGenerator):
     """Belgian UBL 2.1 document generator.
 
     Subclasses ``DocumentGenerator`` and implements ``generate()`` for the
@@ -25,9 +25,9 @@ class BEDocumentGenerator(BaseDocumentGenerator):  # type: ignore[misc]
     def get_country_code(self) -> str:
         return "BE"
 
-    def generate(self, invoice: BEInvoice) -> str:
+    def generate(self, document: BEInvoice) -> str:  # type: ignore[override]
         """Serialize a ``BEInvoice`` to a UBL 2.1 XML string."""
-        return BEUBLSerializer().serialize_be_str(invoice)
+        return BEUBLSerializer().serialize_be_str(document)
 
     async def generate_invoice_be(
         self,

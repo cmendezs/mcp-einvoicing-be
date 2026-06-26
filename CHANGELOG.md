@@ -21,6 +21,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-06-27
+
+### Added
+- **[ARCH-VALID-1c]** `BEParty.tax_id` now enforces the BCE/KBO modulo-97 check digit at model-construction time via a new `@field_validator` calling `mcp_einvoicing_core.TaxIdentifier.validate_be_vat` (3-layer party-validation pattern, Layer 1). Invalid VAT/enterprise numbers raise `ValidationError` instead of being silently accepted.
+
+### Changed
+- Test fixtures in `tests/conftest.py` switched from placeholder VAT numbers to mod-97-valid examples (`BE0428759497` and `BE0403170701`).
+
+---
+
 ## [0.1.0] — TBD
 
 _Initial release._

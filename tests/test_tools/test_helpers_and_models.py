@@ -138,7 +138,34 @@ class TestBEInvoiceIsEN16931:
 
     def test_vat_id_synced_from_tax_id(self, minimal_invoice_data):
         invoice = BEInvoice.model_validate(minimal_invoice_data)
-        assert invoice.seller.vat_id == "BE0123456789"
+        assert invoice.seller.vat_id == "BE0428759497"
+
+
+# ---------------------------------------------------------------------------
+# ARCH-VALID-1c — model-level BCE/KBO modulo-97 enforcement on BEParty.tax_id
+# ---------------------------------------------------------------------------
+
+
+class TestBEPartyTaxIdValidation:
+    """BEParty.tax_id must reject invalid mod-97 numbers at model construction."""
+
+    def test_invalid_check_digit_raises(self, minimal_invoice_data):
+        from pydantic import ValidationError
+
+        data = {
+            **minimal_invoice_data,
+            "seller": {**minimal_invoice_data["seller"], "tax_id": "BE0123456789"},
+        }
+        with pytest.raises(ValidationError, match="Belgian VAT"):
+            BEInvoice.model_validate(data)
+
+    def test_none_tax_id_allowed(self, minimal_invoice_data):
+        data = {
+            **minimal_invoice_data,
+            "buyer": {**minimal_invoice_data["buyer"], "tax_id": None},
+        }
+        invoice = BEInvoice.model_validate(data)
+        assert invoice.buyer.tax_id is None
 
 
 # ---------------------------------------------------------------------------

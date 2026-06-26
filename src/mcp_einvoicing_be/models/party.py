@@ -65,9 +65,24 @@ class BEParty(EN16931Party):
     @field_validator("tax_id", mode="before")
     @classmethod
     def coerce_tax_id(cls, v: Any) -> Any:
-        """Accept 'BE0123456789' string shorthand in addition to TaxIdentifier dict/object."""
+        """Accept 'BE0428759497' string shorthand in addition to TaxIdentifier dict/object."""
         if isinstance(v, str) and len(v) >= 2 and v[:2].isalpha():
             return {"country_code": v[:2].upper(), "identifier": v[2:]}
+        return v
+
+    @field_validator("tax_id", mode="after")
+    @classmethod
+    def _validate_tax_id_checksum(cls, v: TaxIdentifier | None) -> TaxIdentifier | None:
+        """Enforce the BCE/KBO modulo-97 check digit on the structured tax_id (BT-31 / BT-48).
+
+        Delegates to the core 3-layer pattern: TaxIdentifier.validate_be_vat (Layer 1).
+        """
+        if v is None:
+            return v
+        full = f"{v.country_code}{v.identifier}"
+        ok, error = TaxIdentifier.validate_be_vat(full)
+        if not ok:
+            raise ValueError(f"Invalid Belgian VAT/enterprise number: {error}")
         return v
 
     @model_validator(mode="after")

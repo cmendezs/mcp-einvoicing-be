@@ -17,7 +17,7 @@ def minimal_invoice_data() -> dict:
         "currency": "EUR",
         "seller": {
             "name": "Acme NV",
-            "tax_id": "BE0123456789",
+            "tax_id": "BE0428759497",
             "address": {
                 "street": "Rue de la Loi 1",
                 "city": "Brussels",
@@ -27,7 +27,7 @@ def minimal_invoice_data() -> dict:
         },
         "buyer": {
             "name": "Client SPRL",
-            "tax_id": "BE0987654321",
+            "tax_id": "BE0403170701",
             "address": {
                 "street": "Koningsstraat 2",
                 "city": "Antwerp",

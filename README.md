@@ -127,8 +127,8 @@ The `InvoiceInput` object supports:
   "issue_date": "2024-01-15",
   "due_date": "2024-02-14",
   "currency_code": "EUR",
-  "supplier": { "name": "...", "vat_number": "BE0123456789", "address": {...} },
-  "customer": { "name": "...", "vat_number": "BE0987654321", "address": {...} },
+  "supplier": { "name": "...", "vat_number": "BE0428759497", "address": {...} },
+  "customer": { "name": "...", "vat_number": "BE0403170701", "address": {...} },
   "lines": [{ "description": "...", "quantity": 1, "unit_price": 100.00, "vat_rate": 21.0 }]
 }
 ```
@@ -153,7 +153,7 @@ Looks up a Belgian enterprise number (VAT number) against the BCE/KBO public dat
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `vat_number` | `string` | yes | Belgian VAT/enterprise number, e.g. `BE0123456789` or `0123456789` |
+| `vat_number` | `string` | yes | Belgian VAT/enterprise number, e.g. `BE0428759497` or `0123456789` |
 
 Returns enterprise name, registered address, legal status, and NACE activity codes.
 
@@ -165,7 +165,7 @@ Checks whether a Belgian company is registered as a Peppol participant by queryi
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
-| `identifier` | `string` | yes | Peppol participant ID (e.g. `0088:BE0123456789`) or plain Belgian VAT number |
+| `identifier` | `string` | yes | Peppol participant ID (e.g. `0088:BE0428759497`) or plain Belgian VAT number |
 
 Returns registration status, supported document type identifiers, and the SMP access point endpoint URL.
 

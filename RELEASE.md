@@ -41,6 +41,13 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.3.0] - 2026-06-27
+#### Added
+- **[ARCH-VALID-1c] HIGH:** `BEParty.tax_id` now enforces the BCE/KBO modulo-97 check digit at model construction via a new `@field_validator(mode="after")` delegating to `mcp_einvoicing_core.TaxIdentifier.validate_be_vat` (3-layer party-validation pattern, Layer 1). Invalid VAT/enterprise numbers raise `ValidationError` instead of being silently accepted.
+
+#### Changed
+- Test fixtures in `tests/conftest.py` switched from placeholder VATs to mod-97-valid examples (`BE0428759497`, `BE0403170701`); added `TestBEPartyTaxIdValidation` covering invalid checksum and `None` cases.
+
 ### [0.2.0] - 2026-06-01
 #### Fixed / Added
 - **[BE-SC-2] BLOCKING:** `BEInvoice` now extends `EN16931Invoice`; `BEParty` extends

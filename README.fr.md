@@ -127,8 +127,8 @@ L'objet `InvoiceInput` prend en charge :
   "issue_date": "2024-01-15",
   "due_date": "2024-02-14",
   "currency_code": "EUR",
-  "supplier": { "name": "...", "vat_number": "BE0123456789", "address": {...} },
-  "customer": { "name": "...", "vat_number": "BE0987654321", "address": {...} },
+  "supplier": { "name": "...", "vat_number": "BE0428759497", "address": {...} },
+  "customer": { "name": "...", "vat_number": "BE0403170701", "address": {...} },
   "lines": [{ "description": "...", "quantity": 1, "unit_price": 100.00, "vat_rate": 21.0 }]
 }
 ```
@@ -153,7 +153,7 @@ Recherche un numéro d'entreprise belge (numéro de TVA) dans la base de donnée
 
 | Paramètre | Type | Requis | Description |
 |---|---|---|---|
-| `vat_number` | `string` | oui | Numéro de TVA/entreprise belge, par ex. `BE0123456789` ou `0123456789` |
+| `vat_number` | `string` | oui | Numéro de TVA/entreprise belge, par ex. `BE0428759497` ou `0123456789` |
 
 Retourne le nom de l'entreprise, l'adresse enregistrée, le statut juridique et les codes d'activité NACE.
 
@@ -165,7 +165,7 @@ Vérifie si une entreprise belge est enregistrée en tant que participant Peppol
 
 | Paramètre | Type | Requis | Description |
 |---|---|---|---|
-| `identifier` | `string` | oui | Identifiant de participant Peppol (par ex. `0088:BE0123456789`) ou numéro de TVA belge simple |
+| `identifier` | `string` | oui | Identifiant de participant Peppol (par ex. `0088:BE0428759497`) ou numéro de TVA belge simple |
 
 Retourne le statut d'enregistrement, les identifiants de type de document pris en charge et l'URL du point d'accès SMP.
 

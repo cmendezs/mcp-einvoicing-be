@@ -127,8 +127,8 @@ Het `InvoiceInput`-object ondersteunt:
   "issue_date": "2024-01-15",
   "due_date": "2024-02-14",
   "currency_code": "EUR",
-  "supplier": { "name": "...", "vat_number": "BE0123456789", "address": {...} },
-  "customer": { "name": "...", "vat_number": "BE0987654321", "address": {...} },
+  "supplier": { "name": "...", "vat_number": "BE0428759497", "address": {...} },
+  "customer": { "name": "...", "vat_number": "BE0403170701", "address": {...} },
   "lines": [{ "description": "...", "quantity": 1, "unit_price": 100.00, "vat_rate": 21.0 }]
 }
 ```
@@ -153,7 +153,7 @@ Zoekt een Belgisch ondernemingsnummer (btw-nummer) op in de openbare BCE/KBO-dat
 
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
-| `vat_number` | `string` | ja | Belgisch btw-/ondernemingsnummer, bijv. `BE0123456789` of `0123456789` |
+| `vat_number` | `string` | ja | Belgisch btw-/ondernemingsnummer, bijv. `BE0428759497` of `0123456789` |
 
 Retourneert de ondernemingsnaam, het geregistreerde adres, de juridische status en de NACE-activiteitscodes.
 
@@ -165,7 +165,7 @@ Controleert of een Belgisch bedrijf geregistreerd is als Peppol-deelnemer door h
 
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
-| `identifier` | `string` | ja | Peppol-deelnemer-ID (bijv. `0088:BE0123456789`) of gewoon Belgisch btw-nummer |
+| `identifier` | `string` | ja | Peppol-deelnemer-ID (bijv. `0088:BE0428759497`) of gewoon Belgisch btw-nummer |
 
 Retourneert de registratiestatus, ondersteunde documenttype-identificatoren en de URL van het SMP-toegangspunt.
 

@@ -3,11 +3,13 @@
 # UBL customizationID values (BT-24)
 CUSTOMIZATION_IDS: dict[str, str] = {
     "peppol-bis-3": ("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
+    "pint-eu": ("urn:peppol:pint:billing-1@en16931-2017@eu-3"),
 }
 
 # UBL profileID values (BT-23)
 PROFILE_IDS: dict[str, str] = {
     "peppol-bis-3": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+    "pint-eu": "urn:peppol:pint:billing-1",
 }
 
 # Peppol BIS 3.0 business rules subset relevant to Belgium.
@@ -93,24 +95,32 @@ INVOICE_TYPES: list[dict[str, object]] = [
                 "customization_id": CUSTOMIZATION_IDS["peppol-bis-3"],
                 "profile_id": PROFILE_IDS["peppol-bis-3"],
             },
+            "pint-eu": {
+                "customization_id": CUSTOMIZATION_IDS["pint-eu"],
+                "profile_id": PROFILE_IDS["pint-eu"],
+            },
         },
     },
     {
         "code": "381",
         "name": "Credit note",
-        "name_fr": "Note de crédit",
+        "name_fr": "Note de credit",
         "name_nl": "Creditnota",
         "profiles": {
             "peppol-bis-3": {
                 "customization_id": CUSTOMIZATION_IDS["peppol-bis-3"],
                 "profile_id": PROFILE_IDS["peppol-bis-3"],
             },
+            "pint-eu": {
+                "customization_id": CUSTOMIZATION_IDS["pint-eu"],
+                "profile_id": PROFILE_IDS["pint-eu"],
+            },
         },
     },
     {
         "code": "383",
         "name": "Debit note",
-        "name_fr": "Note de débit",
+        "name_fr": "Note de debit",
         "name_nl": "Debietnota",
         "profiles": {
             "peppol-bis-3": {

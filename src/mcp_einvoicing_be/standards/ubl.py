@@ -86,13 +86,64 @@ class BEUBLParser(EN16931UBLParser):
 
     Satisfies the mandatory reception capability required by Art. 13quater of
     Royal Decree no. 1 (inserted by the Royal Decree of 8 July 2025,
-    MB/BS N. 157).  Parses the EN 16931 core field set from a Peppol BIS 3.0 /
-    PINT-BE UBL 2.1 document.
+    MB/BS N. 157).  Parses the EN 16931 core field set from a Peppol BIS 3.0
+    UBL 2.1 document.
 
-    Belgian national extensions (OGM reference, 0208 endpoint scheme) are
-    available in the raw XML; subclass and override ``_extract`` to add
-    extraction of those fields.
+    Belgian extensions extracted:
+    - OGM/VCS structured payment reference from ``<cbc:PaymentID>``
+    - Peppol endpoint IDs (scheme 0208 = KBO/BCE) from ``<cbc:EndpointID>``
     """
+
+    def parse_be(self, xml_bytes: bytes) -> dict[str, object]:
+        """Parse a UBL invoice and return core fields plus Belgian extensions.
+
+        Returns a dict with ``invoice`` (EN16931Invoice.model_dump) merged with
+        ``be_extensions`` containing OGM reference and endpoint scheme info.
+        """
+        invoice = self.parse(xml_bytes)
+        extensions = self._extract_be_extensions(xml_bytes)
+        result = invoice.model_dump(mode="json")
+        result["be_extensions"] = extensions
+        return result
+
+    def _extract_be_extensions(self, xml_bytes: bytes) -> dict[str, object]:
+        """Extract Belgian-specific fields from raw UBL XML."""
+        from lxml import etree  # noqa: PLC0415
+
+        root = etree.fromstring(xml_bytes)
+        ns = {
+            "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+            "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
+        }
+
+        extensions: dict[str, object] = {}
+
+        payment_id_el = root.find(".//cac:PaymentMeans/cbc:PaymentID", ns)
+        if payment_id_el is not None and payment_id_el.text:
+            raw = payment_id_el.text.strip()
+            extensions["ogm_reference"] = raw
+            try:
+                from mcp_einvoicing_core.routing import RoutingIdentifier  # noqa: PLC0415
+
+                result = RoutingIdentifier.validate_be_ogm(raw)
+                extensions["ogm_valid"] = result.valid
+                if result.valid:
+                    extensions["ogm_reference"] = result.normalized_value
+            except Exception:
+                extensions["ogm_valid"] = False
+
+        for role, xpath in [
+            ("seller_endpoint", ".//cac:AccountingSupplierParty/cac:Party/cbc:EndpointID"),
+            ("buyer_endpoint", ".//cac:AccountingCustomerParty/cac:Party/cbc:EndpointID"),
+        ]:
+            ep_el = root.find(xpath, ns)
+            if ep_el is not None:
+                extensions[role] = {
+                    "scheme": ep_el.get("schemeID", ""),
+                    "value": ep_el.text.strip() if ep_el.text else "",
+                }
+
+        return extensions
 
 
 # ---------------------------------------------------------------------------

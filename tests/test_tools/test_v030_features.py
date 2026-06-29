@@ -195,3 +195,82 @@ class TestPeppolStructuredError:
         result = await check_peppol_participant_be(identifier="0208:0428759497")
         assert result["registered"] is False
         assert "ConnectionError" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# EU PINT v1.0.0 profile (BE-SC-15)
+# ---------------------------------------------------------------------------
+
+
+class TestPintEuProfile:
+    def test_pint_eu_accepted_by_model(self, minimal_invoice_data):
+        data = {**minimal_invoice_data, "profile": "pint-eu"}
+        invoice = BEInvoice.model_validate(data)
+        assert invoice.profile == "pint-eu"
+
+    def test_pint_eu_serializes(self, minimal_invoice_data):
+        data = {**minimal_invoice_data, "profile": "pint-eu"}
+        invoice = BEInvoice.model_validate(data)
+        xml_str = BEUBLSerializer().serialize_be_str(invoice)
+        assert "urn:peppol:pint:billing-1@en16931-2017@eu-3" in xml_str
+
+    def test_pint_eu_in_customization_ids(self):
+        from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS
+
+        assert "pint-eu" in CUSTOMIZATION_IDS
+
+
+# ---------------------------------------------------------------------------
+# Core RoutingIdentifier.validate_be_ogm
+# ---------------------------------------------------------------------------
+
+
+class TestCoreOgmValidator:
+    def test_core_validate_be_ogm_valid(self):
+        from mcp_einvoicing_core.routing import RoutingIdentifier
+
+        result = RoutingIdentifier.validate_be_ogm("+++000/0000/00097+++")
+        assert result.valid is True
+        assert result.normalized_value == "+++000/0000/00097+++"
+
+    def test_core_validate_be_ogm_invalid(self):
+        from mcp_einvoicing_core.routing import RoutingIdentifier
+
+        result = RoutingIdentifier.validate_be_ogm("000000000099")
+        assert result.valid is False
+        assert "check digit" in result.error
+
+    def test_be_helper_delegates_to_core(self):
+        result = validate_belgian_ogm("000000000097")
+        assert result == "+++000/0000/00097+++"
+
+
+# ---------------------------------------------------------------------------
+# Belgian extension parsing (OGM + 0208 endpoint)
+# ---------------------------------------------------------------------------
+
+
+class TestBelgianExtensionParsing:
+    @pytest.mark.asyncio
+    async def test_ogm_extracted_from_payment_id(self, minimal_invoice_data):
+        data = {
+            **minimal_invoice_data,
+            "payment": {
+                "iban": "BE68539007547034",
+                "ogm_reference": "+++000/0000/00097+++",
+            },
+        }
+        invoice = BEInvoice.model_validate(data)
+        xml_bytes = BEUBLSerializer().serialize_be(invoice)
+        result = await parse_ubl_invoice_be(xml_content=xml_bytes.decode("utf-8"))
+        assert result["success"] is True
+        ext = result["be_extensions"]
+        assert ext.get("ogm_reference") == "+++000/0000/00097+++"
+        assert ext.get("ogm_valid") is True
+
+    @pytest.mark.asyncio
+    async def test_be_extensions_present_in_result(self, minimal_invoice_data):
+        invoice = BEInvoice.model_validate(minimal_invoice_data)
+        xml_bytes = BEUBLSerializer().serialize_be(invoice)
+        result = await parse_ubl_invoice_be(xml_content=xml_bytes.decode("utf-8"))
+        assert "be_extensions" in result

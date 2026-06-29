@@ -540,7 +540,7 @@ def run_check_5() -> CheckResult:
     bis_mod, _ = _try_import("mcp_einvoicing_be.standards.peppol_bis_3")
     if bis_mod:
         cust_ids = getattr(bis_mod, "CUSTOMIZATION_IDS", None)
-        required_profiles = {"peppol-bis-3"}
+        required_profiles = {"peppol-bis-3", "pint-eu"}
         if cust_ids is not None:
             for profile in sorted(required_profiles):
                 tag = "[OK]" if profile in cust_ids else "[MISSING_PROFILE]"

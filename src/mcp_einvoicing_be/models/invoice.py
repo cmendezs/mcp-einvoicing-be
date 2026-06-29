@@ -122,9 +122,12 @@ class BEInvoice(EN16931Invoice):
 
     # ── Header — narrow types and provide backward-compatible aliases ─────────
 
-    profile: Literal["peppol-bis-3"] = Field(
+    profile: Literal["peppol-bis-3", "pint-eu"] = Field(
         "peppol-bis-3",
-        description="Belgian Peppol profile: Peppol BIS Billing 3.0 (mandatory, Art. 13ter al. 1).",
+        description=(
+            "Belgian Peppol profile: 'peppol-bis-3' (mandatory base, Art. 13ter al. 1) "
+            "or 'pint-eu' (EU PINT v1.0.0, optional under Art. 13ter subsidiary rule)."
+        ),
     )
     invoice_number: str = Field(
         ...,

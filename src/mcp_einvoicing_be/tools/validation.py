@@ -1,13 +1,16 @@
 """Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core.
 
-BE-SC-1 (resolved): _evaluate_rule now performs real lxml XPath evaluation
-against the parsed document tree, so every invoice is checked against the
-hand-coded rule set rather than unconditionally passing.
+Two validation paths:
+1. Schematron XSLT (if downloaded via specs/download.py): delegates to core
+   SchematronValidator for full Peppol BIS 3.0 rule coverage.
+2. XPath fallback: evaluates hand-coded rules when Schematron XSLT is absent.
 
-BE-SH-1 (resolved via core serializer): XML escaping is handled by lxml in the
-EN16931UBLSerializer used by BEUBLSerializer; no manual escaping is needed here.
+BE-SC-1 (resolved): _evaluate_rule uses real lxml XPath evaluation.
 """
 
+from __future__ import annotations
+
+import logging
 from typing import Annotated, Any, Literal, cast
 
 from mcp_einvoicing_core import (
@@ -16,9 +19,12 @@ from mcp_einvoicing_core import (
     ValidationError,
 )
 
+from mcp_einvoicing_be.specs import PEPPOL_BIS3_DIR
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
 from mcp_einvoicing_be.utils.helpers import parse_ubl_xml
+
+_log = logging.getLogger(__name__)
 
 # UBL 2.1 namespace map for lxml XPath evaluation.
 # Rules in PEPPOL_BIS3_RULES use absolute XPath starting with /Invoice/…;
@@ -30,20 +36,49 @@ _UBL_NSMAP: dict[str, str] = {
     "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
 }
 
-ProfileLiteral = Literal["peppol-bis-3", "mercurius"]
+ProfileLiteral = Literal["peppol-bis-3", "pint-eu", "mercurius"]
 
 _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
     "peppol-bis-3": PEPPOL_BIS3_RULES,
+    "pint-eu": PEPPOL_BIS3_RULES,
     "mercurius": MERCURIUS_RULES,
 }
+
+
+def _find_schematron_xslt() -> str | None:
+    """Locate the pre-compiled Peppol BIS 3.0 Schematron XSLT in specs/.
+
+    Returns the path to the XSLT file if found, None otherwise.
+    Looks for common file patterns from the OpenPeppol release ZIP.
+    """
+    if not PEPPOL_BIS3_DIR.is_dir():
+        return None
+    for pattern in ("*.xslt", "*.xsl"):
+        matches = list(PEPPOL_BIS3_DIR.rglob(pattern))
+        if matches:
+            return str(matches[0])
+    return None
 
 
 class BEDocumentValidator(BaseDocumentValidator):
     """Belgian document validator.
 
-    Subclasses ``BaseDocumentValidator`` and implements ``validate()`` for UBL 2.1
-    documents against the three Belgian profiles using lxml XPath rule evaluation.
+    Uses the pre-compiled Peppol BIS 3.0 Schematron XSLT from specs/ when
+    available (downloaded via ``specs/download.py``). Falls back to hand-coded
+    XPath rule evaluation when the XSLT is not present.
     """
+
+    def __init__(self) -> None:
+        self._schematron = None
+        xslt_path = _find_schematron_xslt()
+        if xslt_path:
+            try:
+                from mcp_einvoicing_core.schematron import SchematronValidator  # noqa: PLC0415
+
+                self._schematron = SchematronValidator(xslt_path)
+                _log.info("Loaded Peppol BIS 3.0 Schematron from %s", xslt_path)
+            except Exception as exc:
+                _log.warning("Failed to load Schematron XSLT %s: %s", xslt_path, exc)
 
     def get_schema_version(self) -> str:
         return "Peppol BIS 3.0 / EN16931"
@@ -57,7 +92,29 @@ class BEDocumentValidator(BaseDocumentValidator):
         return self._validate_with_profile(xml, profile="peppol-bis-3")
 
     def _validate_with_profile(self, xml: str, profile: str) -> DocumentValidationResult:
-        """Core validation logic — parses the document then evaluates each rule."""
+        """Core validation logic.
+
+        Uses Schematron XSLT when available for peppol-bis-3/pint-eu profiles,
+        falls back to hand-coded XPath rules otherwise.
+        """
+        if self._schematron and profile in ("peppol-bis-3", "pint-eu"):
+            xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
+            svrl_result = self._schematron.validate(xml_bytes, profile=profile)
+            return DocumentValidationResult(
+                valid=svrl_result.is_valid,
+                errors=[
+                    f"{m.rule_id}: {m.message}"
+                    for m in svrl_result.messages
+                    if m.severity == "error"
+                ],
+                warnings=[
+                    f"{m.rule_id}: {m.message}"
+                    for m in svrl_result.messages
+                    if m.severity == "warning"
+                ],
+                metadata={"profile": profile, "engine": "schematron"},
+            )
+
         root, parse_error = parse_ubl_xml(xml)
         if parse_error:
             return DocumentValidationResult(
@@ -92,13 +149,13 @@ class BEDocumentValidator(BaseDocumentValidator):
         xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
         profile: Annotated[
             ProfileLiteral,
-            "Validation profile: 'peppol-bis-3' (default) or 'mercurius'",
+            "Validation profile: 'peppol-bis-3' (default), 'pint-eu', or 'mercurius'",
         ] = "peppol-bis-3",
     ) -> dict[str, object]:
         """Validate a UBL 2.1 XML invoice against Belgian business rules.
 
         Applies EN 16931 syntax and semantic checks plus the selected Belgian
-        profile overlay (Peppol BIS Billing 3.0 or Mercurius).
+        profile overlay (Peppol BIS Billing 3.0, EU PINT v1.0.0, or Mercurius).
         Returns a structured result with per-rule error and warning messages.
         """
         try:

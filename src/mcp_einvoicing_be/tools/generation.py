@@ -8,7 +8,7 @@ from mcp_einvoicing_be.models.invoice import BEInvoice
 from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
 from mcp_einvoicing_be.standards.ubl import BEUBLSerializer
 
-ProfileLiteral = Literal["peppol-bis-3"]
+ProfileLiteral = Literal["peppol-bis-3", "pint-eu"]
 
 
 class BEDocumentGenerator(BaseDocumentGenerator[BEInvoice]):
@@ -34,7 +34,7 @@ class BEDocumentGenerator(BaseDocumentGenerator[BEInvoice]):
         invoice_data: Annotated[dict[str, Any], "Invoice fields matching the BEInvoice schema"],
         profile: Annotated[
             ProfileLiteral,
-            "Target profile: 'peppol-bis-3' (Peppol BIS Billing 3.0)",
+            "Target profile: 'peppol-bis-3' (default) or 'pint-eu' (EU PINT v1.0.0)",
         ] = "peppol-bis-3",
     ) -> dict[str, object]:
         """Generate a valid UBL 2.1 Belgian e-invoice XML document from structured data.

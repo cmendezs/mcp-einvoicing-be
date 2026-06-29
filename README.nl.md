@@ -12,7 +12,7 @@
 
 ## Inleiding
 
-`mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) die tools aanbiedt voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatieëcosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, de **PINT-BE-extensie** (Nationale Bank van België), en het **Mercurius**-netwerk voor facturatie aan de overheidssector. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert.
+`mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) die tools aanbiedt voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatie-ecosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1**, en het **Mercurius**-netwerk voor facturatie aan de overheidssector. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert.
 
 ---
 
@@ -89,24 +89,14 @@ Voor een lokale ontwikkelingsinstallatie:
 
 ### `validate_invoice_be`
 
-Valideert een UBL 2.1 XML-factuur volgens de Belgische bedrijfsregels (EN 16931 + PINT-BE of Peppol BIS 3.0 + Mercurius-laag).
+Valideert een UBL 2.1 XML-factuur volgens de Belgische bedrijfsregels (EN 16931 + Peppol BIS 3.0 + Mercurius-laag).
 
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
 | `xml` | `string` | ja | Ruwe UBL 2.1 XML-inhoud |
-| `profile` | `string` | nee | `peppol-bis-3` (standaard), `pint-be`, of `mercurius` |
+| `profile` | `string` | nee | `peppol-bis-3` (standaard) of `mercurius` |
 
 Retourneert een `ValidationResult` met `valid`, `errors` en `warnings` (elk met het gefaalde regel-ID en een leesbaar bericht).
-
----
-
-### `validate_pint_be`
-
-Valideert een factuur volgens de PINT-BE-specifieke bedrijfsregels gepubliceerd door de Nationale Bank van België (NBB). Past de PINT-BE Schematron-regels toe bovenop de EN 16931-basis.
-
-| Parameter | Type | Vereist | Beschrijving |
-|---|---|---|---|
-| `xml` | `string` | ja | Ruwe UBL 2.1 XML-inhoud |
 
 ---
 
@@ -117,7 +107,7 @@ Genereert een geldig UBL 2.1 Belgisch e-factuur XML-document vanuit gestructuree
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
 | `invoice_data` | `object` | ja | Factuurvelden (zie het `InvoiceInput`-schema hieronder) |
-| `profile` | `string` | nee | `peppol-bis-3` (standaard) of `pint-be` |
+| `profile` | `string` | nee | `peppol-bis-3` (standaard) |
 
 Het `InvoiceInput`-object ondersteunt:
 
@@ -171,11 +161,29 @@ Retourneert de registratiestatus, ondersteunde documenttype-identificatoren en d
 
 ---
 
+### `parse_ubl_invoice_be`
+
+Analyseert een UBL 2.1 XML-factuur (Peppol BIS 3.0) naar een gestructureerd woordenboek. Voldoet aan de verplichte ontvangstcapaciteit vereist door Art. 13quater van KB nr. 1.
+
+| Parameter | Type | Vereist | Beschrijving |
+|---|---|---|---|
+| `xml_content` | `string` | ja | Ruwe UBL 2.1 XML-factuurinhoud |
+
+Retourneert `{"success": true, "invoice": {...}, "warnings": []}` bij succes, of `{"success": false, "error": "..."}` bij een parseerfout.
+
+---
+
 ### `get_invoice_types_be`
 
 Retourneert de lijst van ondersteunde Belgische e-factuurdocumenttypen (factuur, creditnota, debetnota) met hun UBL `customizationID`- en `profileID`-waarden voor elk profiel.
 
 Geen invoerparameters vereist.
+
+---
+
+## B2G via Mercurius
+
+Mercurius is het Belgische federale e-facturatieplatform voor de overheidssector. Het werkt als een **Peppol-netwerkontvanger**, niet als een aparte API. B2G-facturen worden ingediend via het standaard Peppol-netwerk met het deelnemers-ID van de overheid in het `0208`-schema (KBO/BCE 10-cijferig ondernemingsnummer). Het Access Point stuurt de factuur automatisch door naar Mercurius. Geen Mercurius-specifiek indienpunt of API-sleutel is vereist.
 
 ---
 
@@ -189,9 +197,10 @@ mcp-einvoicing-be/
 │       ├── server.py              # MCP-server-ingangspunt en toolregistratie
 │       ├── tools/
 │       │   ├── __init__.py
-│       │   ├── validation.py      # validate_invoice_be, validate_pint_be
+│       │   ├── validation.py      # validate_invoice_be
 │       │   ├── generation.py      # generate_invoice_be
 │       │   ├── transformation.py  # transform_to_ubl
+│       │   ├── parsing.py         # parse_ubl_invoice_be
 │       │   └── lookup.py          # lookup_vat_be, check_peppol_participant_be, get_invoice_types_be
 │       ├── models/
 │       │   ├── __init__.py
@@ -201,7 +210,7 @@ mcp-einvoicing-be/
 │       │   ├── __init__.py
 │       │   ├── peppol_bis_3.py    # Peppol BIS Billing 3.0 regels en aanpassings-ID's
 │       │   ├── ubl.py             # UBL 2.1 namespaceconstanten en XML-hulpprogramma's
-│       │   ├── pint_be.py         # PINT-BE (NBB) Schematron-regels
+│       │   ├── pint_be.py         # PINT-BE placeholder (verwijderd in v0.3.1)
 │       │   └── mercurius.py       # Mercurius-netwerkconfiguratie en laagregels
 │       └── utils/
 │           ├── __init__.py
@@ -236,11 +245,12 @@ mcp-einvoicing-be/
 - Peppol-netwerkclient (SMP-opzoeken, SML-resolutie)
 - Gemeenschappelijke Pydantic-basismodellen (`BaseInvoice`, `BaseParty`, `BaseValidationResult`)
 
-`mcp-einvoicing-be` voegt België-specifieke logica toe:
-- PINT-BE Schematron-regels (NBB-publicatie)
-- Mercurius-netwerk eindpuntconfiguratie en laagregels
+`mcp-einvoicing-be` voegt Belgie-specifieke logica toe:
+- Peppol BIS 3.0 bedrijfsregelvalidatie (XPath-gebaseerd)
+- Mercurius-netwerklaagregels voor B2G-facturatie
 - BCE/KBO-ondernemingsdatabank-integratie
-- Belgische btw-nummernormalisatie (BTW/TVA-formaat)
+- Belgische btw-nummernormalisatie (BTW/TVA-formaat) en OGM/VCS controlegetal-validatie
+- UBL 2.1 factuuranalyse voor verplichte ontvangst (Art. 13quater)
 - `customizationID`- en `profileID`-waarden specifiek voor de Belgische Peppol-hoek
 
 ---

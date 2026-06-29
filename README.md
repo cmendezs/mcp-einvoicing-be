@@ -12,7 +12,7 @@
 
 ## Introduction
 
-`mcp-einvoicing-be` is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes tools for Belgian electronic invoicing. It covers the full Belgian e-invoicing ecosystem: **Peppol BIS Billing 3.0**, **UBL 2.1/2.3**, the **PINT-BE extension** (National Bank of Belgium), and the **Mercurius** network for public-sector invoicing. The server is part of the `mcp-einvoicing-*` family of country-specific servers, all built on top of [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), which provides the shared validation engine, UBL abstractions, and Peppol network utilities.
+`mcp-einvoicing-be` is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes tools for Belgian electronic invoicing. It covers the full Belgian e-invoicing ecosystem: **Peppol BIS Billing 3.0**, **UBL 2.1**, and the **Mercurius** network for public-sector invoicing. The server is part of the `mcp-einvoicing-*` family of country-specific servers, all built on top of [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), which provides the shared validation engine, UBL abstractions, and Peppol network utilities.
 
 ---
 
@@ -89,24 +89,14 @@ For a local development install:
 
 ### `validate_invoice_be`
 
-Validates a UBL 2.1 XML invoice against Belgian business rules (EN 16931 + PINT-BE or Peppol BIS 3.0 + Mercurius overlay).
+Validates a UBL 2.1 XML invoice against Belgian business rules (EN 16931 + Peppol BIS 3.0 + Mercurius overlay).
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `xml` | `string` | yes | Raw UBL 2.1 XML content |
-| `profile` | `string` | no | `peppol-bis-3` (default), `pint-be`, or `mercurius` |
+| `profile` | `string` | no | `peppol-bis-3` (default) or `mercurius` |
 
 Returns a `ValidationResult` with `valid`, `errors`, and `warnings` (each carrying the failed rule ID and a human-readable message).
-
----
-
-### `validate_pint_be`
-
-Validates an invoice against the PINT-BE-specific business rules published by the National Bank of Belgium (NBB). Wraps the PINT-BE Schematron rules on top of the EN 16931 base.
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `xml` | `string` | yes | Raw UBL 2.1 XML content |
 
 ---
 
@@ -117,7 +107,7 @@ Generates a valid UBL 2.1 Belgian e-invoice XML document from structured data.
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `invoice_data` | `object` | yes | Invoice fields (see `InvoiceInput` schema below) |
-| `profile` | `string` | no | `peppol-bis-3` (default) or `pint-be` |
+| `profile` | `string` | no | `peppol-bis-3` (default) |
 
 The `InvoiceInput` object supports:
 
@@ -171,11 +161,29 @@ Returns registration status, supported document type identifiers, and the SMP ac
 
 ---
 
+### `parse_ubl_invoice_be`
+
+Parses a UBL 2.1 XML invoice (Peppol BIS 3.0) into a structured dict. Satisfies the mandatory reception capability required by Art. 13quater of Royal Decree no. 1.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `xml_content` | `string` | yes | Raw UBL 2.1 XML invoice content |
+
+Returns `{"success": true, "invoice": {...}, "warnings": []}` on success, or `{"success": false, "error": "..."}` on parse failure.
+
+---
+
 ### `get_invoice_types_be`
 
 Returns the list of supported Belgian e-invoice document types (invoice, credit note, debit note) with their UBL `customizationID` and `profileID` values for each profile.
 
 No input parameters required.
+
+---
+
+## B2G via Mercurius
+
+Mercurius is the Belgian federal public-sector e-invoicing platform. It operates as a **Peppol network receiver**, not a separate API. B2G invoices are submitted through the standard Peppol network using the authority's participant ID in the `0208` scheme (KBO/BCE 10-digit enterprise number). The Access Point routes the invoice to Mercurius automatically. No Mercurius-specific submission endpoint or API key is required.
 
 ---
 
@@ -189,9 +197,10 @@ mcp-einvoicing-be/
 │       ├── server.py              # MCP server entry point & tool registration
 │       ├── tools/
 │       │   ├── __init__.py
-│       │   ├── validation.py      # validate_invoice_be, validate_pint_be
+│       │   ├── validation.py      # validate_invoice_be
 │       │   ├── generation.py      # generate_invoice_be
 │       │   ├── transformation.py  # transform_to_ubl
+│       │   ├── parsing.py         # parse_ubl_invoice_be
 │       │   └── lookup.py          # lookup_vat_be, check_peppol_participant_be, get_invoice_types_be
 │       ├── models/
 │       │   ├── __init__.py
@@ -201,7 +210,7 @@ mcp-einvoicing-be/
 │       │   ├── __init__.py
 │       │   ├── peppol_bis_3.py    # Peppol BIS Billing 3.0 rules & customization IDs
 │       │   ├── ubl.py             # UBL 2.1 namespace constants & XML helpers
-│       │   ├── pint_be.py         # PINT-BE (NBB) Schematron rules
+│       │   ├── pint_be.py         # PINT-BE placeholder (removed in v0.3.1)
 │       │   └── mercurius.py       # Mercurius network config & overlay rules
 │       └── utils/
 │           ├── __init__.py
@@ -237,10 +246,11 @@ mcp-einvoicing-be/
 - Common Pydantic base models (`BaseInvoice`, `BaseParty`, `BaseValidationResult`)
 
 `mcp-einvoicing-be` adds Belgium-specific logic on top:
-- PINT-BE Schematron rules (NBB publication)
-- Mercurius network endpoint configuration and overlay rules
+- Peppol BIS 3.0 business rule validation (XPath-based)
+- Mercurius network overlay rules for B2G invoicing
 - BCE/KBO enterprise database integration
-- Belgian VAT number normalization (BTW/TVA format)
+- Belgian VAT number normalization (BTW/TVA format) and OGM/VCS check-digit validation
+- UBL 2.1 invoice parsing for mandatory reception (Art. 13quater)
 - `customizationID` and `profileID` values specific to the Belgian Peppol corner
 
 ---

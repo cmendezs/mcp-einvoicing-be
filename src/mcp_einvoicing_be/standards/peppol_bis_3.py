@@ -3,16 +3,11 @@
 # UBL customizationID values (BT-24)
 CUSTOMIZATION_IDS: dict[str, str] = {
     "peppol-bis-3": ("urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"),
-    "pint-be": (
-        "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"
-        "#conformant#urn:fdc:www.nbb.be:2020:pintbe"
-    ),
 }
 
 # UBL profileID values (BT-23)
 PROFILE_IDS: dict[str, str] = {
     "peppol-bis-3": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
-    "pint-be": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
 }
 
 # Peppol BIS 3.0 business rules subset relevant to Belgium.
@@ -98,10 +93,6 @@ INVOICE_TYPES: list[dict[str, object]] = [
                 "customization_id": CUSTOMIZATION_IDS["peppol-bis-3"],
                 "profile_id": PROFILE_IDS["peppol-bis-3"],
             },
-            "pint-be": {
-                "customization_id": CUSTOMIZATION_IDS["pint-be"],
-                "profile_id": PROFILE_IDS["pint-be"],
-            },
         },
     },
     {
@@ -113,10 +104,6 @@ INVOICE_TYPES: list[dict[str, object]] = [
             "peppol-bis-3": {
                 "customization_id": CUSTOMIZATION_IDS["peppol-bis-3"],
                 "profile_id": PROFILE_IDS["peppol-bis-3"],
-            },
-            "pint-be": {
-                "customization_id": CUSTOMIZATION_IDS["pint-be"],
-                "profile_id": PROFILE_IDS["pint-be"],
             },
         },
     },

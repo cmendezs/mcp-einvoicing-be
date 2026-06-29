@@ -30,6 +30,7 @@ from mcp_einvoicing_core.en16931 import (
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from mcp_einvoicing_be.models.party import Customer, Supplier
+from mcp_einvoicing_be.utils.helpers import validate_belgian_ogm
 
 
 class VatCategory(StrEnum):
@@ -62,9 +63,10 @@ class BEInvoiceLine(InvoiceLineItem):
     total_price: Decimal = Field(default=Decimal("0"))
     vat_category: VatCategory = Field(default=VatCategory.STANDARD)
     unit_code: str = Field(default="C62", description="UN/ECE Unit of Measure code (BT-130)")
-    buyer_item_id: str | None = Field(
+    buyer_article_id: str | None = Field(
         default=None,
-        description="Buyer's item identifier (BT-157)",
+        description="Buyer's item identifier (BT-156)",
+        validation_alias=AliasChoices("buyer_article_id", "buyer_item_id"),
     )
 
     @model_validator(mode="after")
@@ -90,6 +92,15 @@ class BEPaymentTerms(BaseModel):
     bic: str | None = Field(default=None, description="Creditor BIC/SWIFT (BT-86)")
     due_date: str | None = Field(default=None, description="Payment due date (YYYY-MM-DD)")
 
+    @field_validator("ogm_reference", mode="before")
+    @classmethod
+    def _validate_ogm(cls, v: object) -> object:
+        if v is None or v == "":
+            return v
+        if isinstance(v, str):
+            return validate_belgian_ogm(v)
+        return v
+
 
 class BEInvoice(EN16931Invoice):
     """Belgian e-invoice.
@@ -111,12 +122,9 @@ class BEInvoice(EN16931Invoice):
 
     # ── Header — narrow types and provide backward-compatible aliases ─────────
 
-    profile: Literal["peppol-bis-3", "pint-be"] = Field(
+    profile: Literal["peppol-bis-3"] = Field(
         "peppol-bis-3",
-        description=(
-            "Belgian Peppol profile: 'peppol-bis-3' (mandatory base rule, "
-            "Art. 13ter al. 1) or 'pint-be' (optional enrichment)."
-        ),
+        description="Belgian Peppol profile: Peppol BIS Billing 3.0 (mandatory, Art. 13ter al. 1).",
     )
     invoice_number: str = Field(
         ...,
@@ -251,19 +259,22 @@ class BEInvoice(EN16931Invoice):
             vat_cat = str(ln.get("vat_category") or "S")
             vat_rate = Decimal(str(ln.get("vat_rate", 21)))
 
-            line_items.append(
-                {
-                    "line_id": str(ln.get("line_number", idx)),
-                    "name": ln.get("description", ""),
-                    "description": None,
-                    "quantity": qty,
-                    "unit_code": ln.get("unit_code", "C62"),
-                    "unit_price": price,
-                    "line_net_amount": line_net,
-                    "tax_category": vat_cat,
-                    "tax_rate": vat_rate,
-                }
-            )
+            line_item: dict[str, Any] = {
+                "line_id": str(ln.get("line_number", idx)),
+                "name": ln.get("description", ""),
+                "description": None,
+                "quantity": qty,
+                "unit_code": ln.get("unit_code", "C62"),
+                "unit_price": price,
+                "line_net_amount": line_net,
+                "tax_category": vat_cat,
+                "tax_rate": vat_rate,
+            }
+            if ln.get("buyer_article_id") or ln.get("buyer_item_id"):
+                line_item["buyer_article_id"] = ln.get("buyer_article_id") or ln.get(
+                    "buyer_item_id"
+                )
+            line_items.append(line_item)
             tax_groups[(vat_cat, str(vat_rate))] += line_net
 
         # VAT breakdown — ROUND_HALF_EVEN on the document total per EN 16931 §7.4

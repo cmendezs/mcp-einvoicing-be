@@ -79,6 +79,34 @@ def parse_ubl_xml(xml: str | bytes) -> tuple[Any, str | None]:
         return None, f"XML parse error: {exc}"
 
 
+def validate_belgian_ogm(value: str) -> str:
+    """Validate a Belgian OGM/VCS structured payment reference.
+
+    Accepts both the formatted form (+++xxx/xxxx/xxxcc+++) and bare 12-digit form.
+    The last two digits are the modulo-97 check digits: remainder of the first 10
+    digits divided by 97 (or 97 when the remainder is 0).
+
+    Returns the normalised +++xxx/xxxx/xxxcc+++ form on success.
+
+    Raises:
+        ValueError: if the check digit does not match or the format is invalid.
+    """
+    digits = re.sub(r"[+/\s.\-]", "", value)
+    if not re.fullmatch(r"\d{12}", digits):
+        raise ValueError(
+            f"Invalid OGM/VCS reference: {value!r}. Expected 12 digits "
+            "(with optional +++xxx/xxxx/xxxcc+++ formatting)."
+        )
+    base = int(digits[:10])
+    check = int(digits[10:])
+    expected = base % 97 or 97
+    if check != expected:
+        raise ValueError(
+            f"Invalid OGM/VCS check digit in {value!r}: expected {expected:02d}, got {check:02d}."
+        )
+    return f"+++{digits[:3]}/{digits[3:7]}/{digits[7:12]}+++"
+
+
 def format_belgian_ogm(base_digits: str) -> str:
     """Generate a Belgian OGM/VCS structured payment reference (+++xxx/xxxx/xxxxx+++).
 

@@ -8,14 +8,14 @@ from mcp_einvoicing_be.models.invoice import BEInvoice
 from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
 from mcp_einvoicing_be.standards.ubl import BEUBLSerializer
 
-ProfileLiteral = Literal["peppol-bis-3", "pint-be"]
+ProfileLiteral = Literal["peppol-bis-3"]
 
 
 class BEDocumentGenerator(BaseDocumentGenerator[BEInvoice]):
     """Belgian UBL 2.1 document generator.
 
     Subclasses ``DocumentGenerator`` and implements ``generate()`` for the
-    Peppol BIS Billing 3.0 and PINT-BE profiles. Tools are exposed as instance
+    Peppol BIS Billing 3.0 profile. Tools are exposed as instance
     methods so they can be registered on ``EInvoicingMCPServer``.
     """
 
@@ -34,7 +34,7 @@ class BEDocumentGenerator(BaseDocumentGenerator[BEInvoice]):
         invoice_data: Annotated[dict[str, Any], "Invoice fields matching the BEInvoice schema"],
         profile: Annotated[
             ProfileLiteral,
-            "Target profile: 'peppol-bis-3' (default) or 'pint-be'",
+            "Target profile: 'peppol-bis-3' (Peppol BIS Billing 3.0)",
         ] = "peppol-bis-3",
     ) -> dict[str, object]:
         """Generate a valid UBL 2.1 Belgian e-invoice XML document from structured data.

@@ -25,14 +25,6 @@ async def test_accepts_valid_peppol_xml(valid_peppol_xml: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_validate_pint_be_accepts_valid_xml(valid_pint_be_xml: str) -> None:
-    if not valid_pint_be_xml:
-        pytest.skip("Fixture invoice_valid_pint_be.xml not yet available")
-    result = await _val.validate_pint_be(xml=valid_pint_be_xml)
-    assert result["valid"] is True
-
-
-@pytest.mark.asyncio
 async def test_mercurius_profile_is_recorded(invalid_xml: str) -> None:
     result = await _val.validate_invoice_be(xml=invalid_xml, profile="mercurius")
     assert result["profile"] == "mercurius"

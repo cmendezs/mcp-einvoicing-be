@@ -10,6 +10,7 @@ from mcp_einvoicing_be.tools.lookup import (
     get_invoice_types_be,
     lookup_vat_be,
 )
+from mcp_einvoicing_be.tools.parsing import parse_ubl_invoice_be
 from mcp_einvoicing_be.tools.transformation import transform_to_ubl
 from mcp_einvoicing_be.tools.validation import BEDocumentValidator
 
@@ -20,9 +21,9 @@ _validator = BEDocumentValidator()
 def _register_be_tools(mcp: Any) -> None:
     """Register all Belgian e-invoicing tools onto the shared FastMCP instance."""
     mcp.tool()(_validator.validate_invoice_be)
-    mcp.tool()(_validator.validate_pint_be)
     mcp.tool()(_generator.generate_invoice_be)
     mcp.tool()(transform_to_ubl)
+    mcp.tool()(parse_ubl_invoice_be)
     mcp.tool()(lookup_vat_be)
     mcp.tool()(check_peppol_participant_be)
     mcp.tool()(get_invoice_types_be)
@@ -31,8 +32,10 @@ def _register_be_tools(mcp: Any) -> None:
 mcp = EInvoicingMCPServer(
     "mcp-einvoicing-be",
     instructions=(
-        "Tools for Belgian electronic invoicing: validation, generation, and lookups "
-        "for Peppol BIS Billing 3.0, PINT-BE (NBB), UBL 2.1, and Mercurius."
+        "Tools for Belgian electronic invoicing: validation, generation, parsing, "
+        "and lookups for Peppol BIS Billing 3.0, UBL 2.1, and Mercurius. "
+        "B2G invoices route via Mercurius (Peppol receiver, scheme 0208); "
+        "see README for details."
     ),
 )
 mcp.register_plugin(_register_be_tools, "be")

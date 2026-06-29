@@ -34,12 +34,6 @@ async def test_generate_peppol_customization_id(minimal_invoice_data: dict) -> N
 
 
 @pytest.mark.asyncio
-async def test_generate_pint_be_customization_id(minimal_invoice_data: dict) -> None:
-    result = await _gen.generate_invoice_be(invoice_data=minimal_invoice_data, profile="pint-be")
-    assert result["customization_id"] == CUSTOMIZATION_IDS["pint-be"]
-
-
-@pytest.mark.asyncio
 async def test_generate_contains_invoice_number(minimal_invoice_data: dict) -> None:
     result = await _gen.generate_invoice_be(invoice_data=minimal_invoice_data)
     assert "TEST-2024-001" in result["xml"]

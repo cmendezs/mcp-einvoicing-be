@@ -51,6 +51,9 @@ _PRIMARY_INVOICE_CLASS: tuple[str, str] | None = (
 
 _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     "mcp_einvoicing_core.base_server": {
+        # OVERRIDE-REASON: typing primitives re-exported by base_server; not part of the public API used by country packages
+        "Generic",
+        "TypeVar",
         # OVERRIDE-REASON: BE has no document parser class; BEUBLParser covers the Art. 13quater reception requirement
         "BaseDocumentParser",
         # OVERRIDE-REASON: Peppol BIS 3.0 is push-only submission; no session-based lifecycle API is required for BE
@@ -88,6 +91,9 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # OVERRIDE-REASON: XAdES signing config and signer not needed; Peppol BIS 3.0 uses AS4 transport-level signatures
         "XAdESSignerConfig",
         "XAdESEPESSigner",
+        # OVERRIDE-REASON: CAdES signing is IT-only (SdI); Belgian Peppol BIS 3.0 does not require document signing
+        "CAdESSigner",
+        "CAdESSignerConfig",
         # OVERRIDE-REASON: XMLDSigSigner/XMLDSigSignerConfig (core v1.4.0) is
         # the BR NF-e plain enveloped XML-DSig signer; not applicable to
         # PINT-BE, which is signed at the AS4 transport level
@@ -272,11 +278,11 @@ _BE_MODULES: list[str] = [
     "mcp_einvoicing_be.specs",
     "mcp_einvoicing_be.standards.mercurius",
     "mcp_einvoicing_be.standards.peppol_bis_3",
-    "mcp_einvoicing_be.standards.pint_be",
     "mcp_einvoicing_be.standards.ubl",
     "mcp_einvoicing_be.tools.generation",
     "mcp_einvoicing_be.tools.lookup",
     "mcp_einvoicing_be.tools.transformation",
+    "mcp_einvoicing_be.tools.parsing",
     "mcp_einvoicing_be.tools.validation",
     "mcp_einvoicing_be.utils.helpers",
 ]
@@ -290,12 +296,12 @@ _PYPROJECT = Path(__file__).parent.parent / "pyproject.toml"
 
 _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
     "validate_invoice_be": "Validate a Peppol BIS 3.0 / UBL 2.1 invoice",
-    "validate_pint_be": "Validate against PINT-BE (NBB) business rules",
     "generate_invoice_be": "Generate a UBL 2.1 invoice document",
     "transform_to_ubl": "Transform invoice data to UBL 2.1 XML",
     "lookup_vat_be": "Look up Belgian company via BCE/KBO",
     "check_peppol_participant_be": "Check Peppol participant registration (BE)",
     "get_invoice_types_be": "List supported invoice types and profiles",
+    "parse_ubl_invoice_be": "Parse a UBL 2.1 XML invoice into a structured dict",
 }
 
 
@@ -308,6 +314,7 @@ def _collect_registered_tools() -> set[str]:
         ("mcp_einvoicing_be.tools.lookup", "lookup_vat_be"),
         ("mcp_einvoicing_be.tools.lookup", "check_peppol_participant_be"),
         ("mcp_einvoicing_be.tools.lookup", "get_invoice_types_be"),
+        ("mcp_einvoicing_be.tools.parsing", "parse_ubl_invoice_be"),
     ]
     for mod_path, fn_name in standalone:
         mod, _ = _try_import(mod_path)
@@ -320,7 +327,7 @@ def _collect_registered_tools() -> set[str]:
         if cls:
             try:
                 inst = cls()
-                for name in ("validate_invoice_be", "validate_pint_be"):
+                for name in ("validate_invoice_be",):
                     if hasattr(inst, name):
                         registered.add(name)
             except Exception:
@@ -533,7 +540,7 @@ def run_check_5() -> CheckResult:
     bis_mod, _ = _try_import("mcp_einvoicing_be.standards.peppol_bis_3")
     if bis_mod:
         cust_ids = getattr(bis_mod, "CUSTOMIZATION_IDS", None)
-        required_profiles = {"peppol-bis-3", "pint-be"}
+        required_profiles = {"peppol-bis-3"}
         if cust_ids is not None:
             for profile in sorted(required_profiles):
                 tag = "[OK]" if profile in cust_ids else "[MISSING_PROFILE]"

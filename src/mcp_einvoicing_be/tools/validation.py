@@ -18,7 +18,6 @@ from mcp_einvoicing_core import (
 
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
-from mcp_einvoicing_be.standards.pint_be import PINT_BE_RULES
 from mcp_einvoicing_be.utils.helpers import parse_ubl_xml
 
 # UBL 2.1 namespace map for lxml XPath evaluation.
@@ -31,11 +30,10 @@ _UBL_NSMAP: dict[str, str] = {
     "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
 }
 
-ProfileLiteral = Literal["peppol-bis-3", "pint-be", "mercurius"]
+ProfileLiteral = Literal["peppol-bis-3", "mercurius"]
 
 _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
     "peppol-bis-3": PEPPOL_BIS3_RULES,
-    "pint-be": PINT_BE_RULES,
     "mercurius": MERCURIUS_RULES,
 }
 
@@ -94,13 +92,13 @@ class BEDocumentValidator(BaseDocumentValidator):
         xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
         profile: Annotated[
             ProfileLiteral,
-            "Validation profile: 'peppol-bis-3' (default), 'pint-be', or 'mercurius'",
+            "Validation profile: 'peppol-bis-3' (default) or 'mercurius'",
         ] = "peppol-bis-3",
     ) -> dict[str, object]:
         """Validate a UBL 2.1 XML invoice against Belgian business rules.
 
         Applies EN 16931 syntax and semantic checks plus the selected Belgian
-        profile overlay (Peppol BIS Billing 3.0, PINT-BE, or Mercurius).
+        profile overlay (Peppol BIS Billing 3.0 or Mercurius).
         Returns a structured result with per-rule error and warning messages.
         """
         try:
@@ -108,20 +106,6 @@ class BEDocumentValidator(BaseDocumentValidator):
             return cast(dict[str, object], result.to_dict())
         except ValidationError as exc:
             return {"valid": False, "profile": profile, "errors": [str(exc)], "warnings": []}
-
-    async def validate_pint_be(
-        self,
-        xml: Annotated[str, "Raw UBL 2.1 XML invoice content"],
-    ) -> dict[str, object]:
-        """Validate an invoice against PINT-BE rules published by the National Bank of Belgium.
-
-        PINT-BE is the Belgian PINT (Peppol International) extension that adds
-        country-specific mandatory elements on top of EN 16931.  Rule IDs follow
-        the PINT-BE-Rxxx naming convention from the NBB specification.
-        Note: PINT-BE is not mandated by the Royal Decree of 8 July 2025; it is an
-        optional enrichment for specific use cases.
-        """
-        return await self.validate_invoice_be(xml=xml, profile="pint-be")
 
     def _evaluate_rule(
         self,

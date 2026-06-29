@@ -59,7 +59,7 @@ def _be_invoice_to_en16931(invoice: BEInvoice) -> EN16931Invoice:
 
 
 class BEUBLSerializer(EN16931UBLSerializer):
-    """UBL 2.1 serializer for Belgian e-invoices (Peppol BIS 3.0 / PINT-BE).
+    """UBL 2.1 serializer for Belgian e-invoices (Peppol BIS 3.0).
 
     Converts a BEInvoice to a pure EN16931Invoice (profile URN resolved,
     BE-only fields stripped) then delegates to the core EN16931UBLSerializer

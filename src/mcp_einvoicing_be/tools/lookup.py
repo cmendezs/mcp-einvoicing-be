@@ -62,15 +62,24 @@ async def lookup_vat_be(
         response = await client._request("GET", f"/enterprises/{digits}")
     except PlatformError as exc:
         if exc.status_code == 404:
-            return {
+            not_found: dict[str, object] = {
                 "found": False,
                 "vat_number": normalized,
                 "error": "Enterprise number not found",
             }
+            if not os.environ.get("BCE_API_KEY"):
+                not_found["warning"] = {
+                    "code": "BCE_API_KEY_MISSING",
+                    "message": (
+                        "BCE_API_KEY is not set. Results may be incomplete or rate-limited. "
+                        "Set the BCE_API_KEY environment variable for full BCE/KBO access."
+                    ),
+                }
+            return not_found
         raise
 
     data: dict[str, object] = response.json()
-    return {
+    result: dict[str, object] = {
         "found": True,
         "vat_number": normalized,
         "name": data.get("name"),
@@ -80,6 +89,15 @@ async def lookup_vat_be(
         "nace_codes": data.get("activities", []),
         "start_date": data.get("startDate"),
     }
+    if not os.environ.get("BCE_API_KEY"):
+        result["warning"] = {
+            "code": "BCE_API_KEY_MISSING",
+            "message": (
+                "BCE_API_KEY is not set. Results may be incomplete or rate-limited. "
+                "Set the BCE_API_KEY environment variable for full BCE/KBO access."
+            ),
+        }
+    return result
 
 
 async def check_peppol_participant_be(
@@ -118,7 +136,14 @@ async def check_peppol_participant_be(
         }
 
     client = PeppolSMPClient()
-    result = await client.lookup_participant(participant_id)
+    try:
+        result = await client.lookup_participant(participant_id)
+    except Exception as exc:
+        return {
+            "registered": False,
+            "participant_id": participant_id_str,
+            "error": f"{type(exc).__name__}: {exc}",
+        }
     return result.to_dict()
 
 
@@ -127,6 +152,6 @@ async def get_invoice_types_be() -> dict[str, object]:
 
     Includes invoice (380), credit note (381), and debit note (383) with their
     UBL ``customizationID`` and ``profileID`` values for each supported profile
-    (Peppol BIS Billing 3.0 and PINT-BE).
+    (Peppol BIS Billing 3.0).
     """
     return {"invoice_types": INVOICE_TYPES}

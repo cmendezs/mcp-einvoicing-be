@@ -44,7 +44,7 @@ mcp-publisher publish
 ### [0.4.0] - 2026-06-30
 #### Added
 - **[BE-LC-5]** `parse_ubl_invoice_be` MCP tool for the mandatory UBL reception capability (Art. 13quater RD no. 1, RD of 8 July 2025). Extracts the EN 16931 core field set plus Belgian extensions (OGM/VCS reference, 0208 endpoint scheme) into a `be_extensions` dict.
-- **[BE-SC-15]** EU PINT v1.0.0 (`pint-eu`) profile support: `urn:peppol:pint:billing-1@en16931-2017@eu-3`, the OpenPeppol-published spec, selectable alongside `peppol-bis-3`.
+- **[BE-SC-15]** EU PINT v1.0.1 (`pint-eu`) profile support: `urn:peppol:pint:billing-1@en16931-2017@eu-3`, the OpenPeppol-published spec, selectable alongside `peppol-bis-3`.
 - **[BE-TL-4]** OGM/VCS structured payment reference check-digit validator (`@field_validator` on `BEPaymentTerms.ogm_reference`), delegating to the new `RoutingIdentifier.validate_be_ogm` in `mcp-einvoicing-core>=1.13.0`.
 - Schematron wiring: `BEDocumentValidator` loads the pre-compiled Peppol BIS 3.0 Schematron XSLT from `specs/` when present, delegating to core's `SchematronValidator`; falls back to hand-coded XPath rules otherwise.
 - **[BE-LC-2]** Structured `BCE_API_KEY_MISSING` warning in `lookup_vat_be` response when the env var is absent.

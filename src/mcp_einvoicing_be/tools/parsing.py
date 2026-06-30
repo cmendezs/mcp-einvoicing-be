@@ -17,7 +17,7 @@ async def parse_ubl_invoice_be(
 ) -> dict[str, object]:
     """Parse a UBL 2.1 XML invoice into a structured dict.
 
-    Accepts a Peppol BIS Billing 3.0 or EU PINT v1.0.0 UBL 2.1 document and
+    Accepts a Peppol BIS Billing 3.0 or EU PINT v1.0.1 UBL 2.1 document and
     extracts the EN 16931 core field set (header, parties, lines, tax breakdown,
     totals) plus Belgian extensions (OGM/VCS reference, endpoint scheme info).
 

@@ -126,7 +126,7 @@ class BEInvoice(EN16931Invoice):
         "peppol-bis-3",
         description=(
             "Belgian Peppol profile: 'peppol-bis-3' (mandatory base, Art. 13ter al. 1) "
-            "or 'pint-eu' (EU PINT v1.0.0, optional under Art. 13ter subsidiary rule)."
+            "or 'pint-eu' (EU PINT v1.0.1, optional under Art. 13ter subsidiary rule)."
         ),
     )
     invoice_number: str = Field(

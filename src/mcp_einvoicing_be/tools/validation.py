@@ -155,7 +155,7 @@ class BEDocumentValidator(BaseDocumentValidator):
         """Validate a UBL 2.1 XML invoice against Belgian business rules.
 
         Applies EN 16931 syntax and semantic checks plus the selected Belgian
-        profile overlay (Peppol BIS Billing 3.0, EU PINT v1.0.0, or Mercurius).
+        profile overlay (Peppol BIS Billing 3.0, EU PINT v1.0.1, or Mercurius).
         Returns a structured result with per-rule error and warning messages.
         """
         try:

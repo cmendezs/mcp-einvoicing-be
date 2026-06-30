@@ -34,7 +34,7 @@ class BEDocumentGenerator(BaseDocumentGenerator[BEInvoice]):
         invoice_data: Annotated[dict[str, Any], "Invoice fields matching the BEInvoice schema"],
         profile: Annotated[
             ProfileLiteral,
-            "Target profile: 'peppol-bis-3' (default) or 'pint-eu' (EU PINT v1.0.0)",
+            "Target profile: 'peppol-bis-3' (default) or 'pint-eu' (EU PINT v1.0.1)",
         ] = "peppol-bis-3",
     ) -> dict[str, object]:
         """Generate a valid UBL 2.1 Belgian e-invoice XML document from structured data.

@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `parse_ubl_invoice_be` tool: UBL 2.1 invoice parsing for the mandatory reception capability (Art. 13quater RD no. 1), including Belgian extensions (OGM/VCS reference, 0208 endpoint scheme)
-- EU PINT v1.0.0 (`pint-eu`) profile: `urn:peppol:pint:billing-1@en16931-2017@eu-3`
+- EU PINT v1.0.1 (`pint-eu`) profile: `urn:peppol:pint:billing-1@en16931-2017@eu-3`
 - OGM/VCS structured payment reference check-digit validator on `BEPaymentTerms.ogm_reference`
 - Schematron-based validation via core's `SchematronValidator` when the Peppol BIS 3.0 XSLT is present in `specs/`
 - Structured `BCE_API_KEY_MISSING` warning and structured Peppol lookup error responses

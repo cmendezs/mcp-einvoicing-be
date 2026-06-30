@@ -210,7 +210,7 @@ mcp-einvoicing-be/
 │       │   ├── __init__.py
 │       │   ├── peppol_bis_3.py    # Peppol BIS Billing 3.0 rules & customization IDs
 │       │   ├── ubl.py             # UBL 2.1 namespace constants & XML helpers
-│       │   ├── pint_be.py         # PINT-BE placeholder (removed in v0.3.1)
+│       │   ├── pint_be.py         # PINT-BE placeholder (removed in v0.4.0)
 │       │   └── mercurius.py       # Mercurius network config & overlay rules
 │       └── utils/
 │           ├── __init__.py

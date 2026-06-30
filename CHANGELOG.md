@@ -9,15 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.4.0] — 2026-06-30
+
 ### Added
-- Initial scaffolding and project structure
-- `validate_invoice_be` tool: UBL 2.1 validation against Peppol BIS 3.0, PINT-BE, and Mercurius profiles
-- `validate_pint_be` tool: PINT-BE specific Schematron rules (NBB)
-- `generate_invoice_be` tool: UBL 2.1 invoice generation from structured data
-- `transform_to_ubl` tool: JSON-to-UBL 2.1 XML transformation
-- `lookup_vat_be` tool: BCE/KBO enterprise number lookup
-- `check_peppol_participant_be` tool: Peppol SMP/SML participant lookup
-- `get_invoice_types_be` tool: supported Belgian e-invoice document types
+- `parse_ubl_invoice_be` tool: UBL 2.1 invoice parsing for the mandatory reception capability (Art. 13quater RD no. 1), including Belgian extensions (OGM/VCS reference, 0208 endpoint scheme)
+- EU PINT v1.0.0 (`pint-eu`) profile: `urn:peppol:pint:billing-1@en16931-2017@eu-3`
+- OGM/VCS structured payment reference check-digit validator on `BEPaymentTerms.ogm_reference`
+- Schematron-based validation via core's `SchematronValidator` when the Peppol BIS 3.0 XSLT is present in `specs/`
+- Structured `BCE_API_KEY_MISSING` warning and structured Peppol lookup error responses
+
+### Removed
+- `validate_pint_be` tool and the `pint-be` profile (PINT-BE was never a published OpenPeppol specification)
+
+### Fixed
+- `buyer_item_id` renamed to `buyer_article_id` (BT-156, was mislabelled as BT-157); now wired to `<cac:BuyersItemIdentification>` in UBL output
+
+### Changed
+- Core dependency floor raised to `mcp-einvoicing-core>=1.13.0,<2.0.0`
 
 ---
 

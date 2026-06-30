@@ -41,6 +41,25 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.4.0] - 2026-06-30
+#### Added
+- **[BE-LC-5]** `parse_ubl_invoice_be` MCP tool for the mandatory UBL reception capability (Art. 13quater RD no. 1, RD of 8 July 2025). Extracts the EN 16931 core field set plus Belgian extensions (OGM/VCS reference, 0208 endpoint scheme) into a `be_extensions` dict.
+- **[BE-SC-15]** EU PINT v1.0.0 (`pint-eu`) profile support: `urn:peppol:pint:billing-1@en16931-2017@eu-3`, the OpenPeppol-published spec, selectable alongside `peppol-bis-3`.
+- **[BE-TL-4]** OGM/VCS structured payment reference check-digit validator (`@field_validator` on `BEPaymentTerms.ogm_reference`), delegating to the new `RoutingIdentifier.validate_be_ogm` in `mcp-einvoicing-core>=1.13.0`.
+- Schematron wiring: `BEDocumentValidator` loads the pre-compiled Peppol BIS 3.0 Schematron XSLT from `specs/` when present, delegating to core's `SchematronValidator`; falls back to hand-coded XPath rules otherwise.
+- **[BE-LC-2]** Structured `BCE_API_KEY_MISSING` warning in `lookup_vat_be` response when the env var is absent.
+- **[BE-LC-3]** Structured error dict for non-404 Peppol SMP lookup failures in `check_peppol_participant_be`.
+
+#### Fixed
+- **[BE-SC-4]** Removed the fabricated `pint-be` profile and its unanchored URN (`urn:fdc:www.nbb.be:2020:pintbe`) — PINT-BE was never published by OpenPeppol. Belgian law mandates Peppol BIS 3.0 only.
+- **[BE-SC-8]** Renamed `buyer_item_id` to `buyer_article_id` (BT-156, was mislabelled as BT-157); wired to `<cac:BuyersItemIdentification>` in the UBL serializer. Backward-compat alias retained.
+- **[BE-SC-6]** `buyer_reference` (BT-10) confirmed end-to-end via `EN16931Invoice` inheritance; round-trip test added.
+
+#### Changed
+- **[BE-AUD-1]** Closed all remaining audit overrides for core v1.12.0+ symbols (Generic, TypeVar, CAdESSigner, CAdESSignerConfig). Audit verdict: PASS, 0 blocking, 0 warnings.
+- **[BE-LC-4]** Removed dead `MERCURIUS_ACCESS_POINT` constant; documented Mercurius B2G routing (Peppol receiver, no separate API, `0208` scheme) in README (EN/FR/NL) and server instructions.
+- Core dependency floor raised to `mcp-einvoicing-core>=1.13.0,<2.0.0`.
+
 ### [0.3.0] - 2026-06-27
 #### Added
 - **[ARCH-VALID-1c] HIGH:** `BEParty.tax_id` now enforces the BCE/KBO modulo-97 check digit at model construction via a new `@field_validator(mode="after")` delegating to `mcp_einvoicing_core.TaxIdentifier.validate_be_vat` (3-layer party-validation pattern, Layer 1). Invalid VAT/enterprise numbers raise `ValidationError` instead of being silently accepted.

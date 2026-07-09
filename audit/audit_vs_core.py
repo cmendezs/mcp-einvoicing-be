@@ -230,6 +230,12 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "BaseJSONValidator",
         # OVERRIDE-REASON: BE uses DocumentValidationResult from core; ValidationMessage detail type not used in BE tools
         "ValidationMessage",
+        # OVERRIDE-REASON: BE-SH-4 (2026-07): SaxonSchematronValidator is the Saxon-backed engine variant; BE loads SchematronValidator directly, not the Saxon path
+        "SaxonSchematronValidator",
+        # OVERRIDE-REASON: BE-SH-4 (2026-07): get_xslt_version is a diagnostic helper for compiled XSLT; not called by BE validation tools
+        "get_xslt_version",
+        # OVERRIDE-REASON: BE-SH-4 (2026-07): load_schematron_validator factory is not invoked directly; BEDocumentValidator instantiates SchematronValidator itself (revisit under BE-SC-11)
+        "load_schematron_validator",
         # OVERRIDE-REASON: stdlib/third-party re-exports in schematron; BE imports from source directly
         "ABC",
         "abstractmethod",

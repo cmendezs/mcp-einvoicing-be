@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-06-15T08:07:56.199054+00:00",
+  "generated_at": "2026-07-09T21:45:58.261338+00:00",
   "pkg_name": "mcp-einvoicing-be",
-  "pkg_version": "0.2.0",
-  "core_version": "1.5.0",
+  "pkg_version": "0.4.1",
+  "core_version": "1.14.0",
   "core_version_compatible": true,
   "exit_code": 0,
   "total_blocking": 0,
@@ -105,6 +105,13 @@
           "check_id": "CHECK_1",
           "tag": "[OVERRIDE]",
           "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.Generic",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.base_server.InvoiceDocument",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
@@ -127,6 +134,13 @@
           "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.base_server.TaxIdValidationResult",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.base_server.TypeVar",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
@@ -162,6 +176,20 @@
           "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.digital_signature.BaseDocumentSigner",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.CAdESSigner",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.CAdESSignerConfig",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
@@ -798,6 +826,13 @@
           "check_id": "CHECK_1",
           "tag": "[OVERRIDE]",
           "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.SaxonSchematronValidator",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.schematron.SchematronValidator",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
@@ -834,6 +869,20 @@
           "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.schematron.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.get_xslt_version",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.schematron.load_schematron_validator",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
@@ -991,13 +1040,6 @@
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "validate_pint_be",
-          "message": "Tool 'validate_pint_be' is registered. (Validate against PINT-BE (NBB) business rules)"
-        },
-        {
-          "check_id": "CHECK_2",
-          "tag": "[OK]",
-          "severity": "OK",
           "symbol": "generate_invoice_be",
           "message": "Tool 'generate_invoice_be' is registered. (Generate a UBL 2.1 invoice document)"
         },
@@ -1028,6 +1070,13 @@
           "severity": "OK",
           "symbol": "get_invoice_types_be",
           "message": "Tool 'get_invoice_types_be' is registered. (List supported invoice types and profiles)"
+        },
+        {
+          "check_id": "CHECK_2",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "parse_ubl_invoice_be",
+          "message": "Tool 'parse_ubl_invoice_be' is registered. (Parse a UBL 2.1 XML invoice into a structured dict)"
         }
       ]
     },
@@ -1112,7 +1161,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "mcp-einvoicing-core",
-          "message": "Installed: 1.5.0 | Declared range: >=1.1.0,<2.0.0 | Compatible: True"
+          "message": "Installed: 1.14.0 | Declared range: >=1.13.0,<2.0.0 | Compatible: True"
         }
       ]
     },
@@ -1157,8 +1206,8 @@
           "check_id": "CHECK_5",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "CUSTOMIZATION_IDS['pint-be']",
-          "message": "Profile 'pint-be' has a CUSTOMIZATION_IDS entry."
+          "symbol": "CUSTOMIZATION_IDS['pint-eu']",
+          "message": "Profile 'pint-eu' has a CUSTOMIZATION_IDS entry."
         },
         {
           "check_id": "CHECK_5",
@@ -1173,6 +1222,24 @@
           "severity": "OK",
           "symbol": "BEPaymentTerms.ogm_reference",
           "message": "Payment terms field 'ogm_reference' is present."
+        }
+      ]
+    },
+    {
+      "check_id": "CHECK_6",
+      "name": "Parallel-implementation detector",
+      "passed": true,
+      "skipped": false,
+      "skip_reason": "",
+      "blocking_count": 0,
+      "warning_count": 0,
+      "findings": [
+        {
+          "check_id": "CHECK_6",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "*",
+          "message": "No parallel implementations of core capabilities detected."
         }
       ]
     }

@@ -41,6 +41,22 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.5.0] - 2026-07-15
+#### Added
+- **[BE-SC-9]** `standards/ubl.py` now populates `business_process` (BT-23) from the profile's `PROFILE_IDS` mapping, consuming `mcp-einvoicing-core>=1.15.0`; emitted as `<cbc:ProfileID>`.
+- **[BE-SC-10]** `models/invoice.py` model validator auto-populates `buyer_reference` (BT-10) from `buyer.reference` when unset.
+- `DocumentValidationResult` metadata now includes `engine` (`schematron-xslt` vs `xpath-fallback`) so callers can tell which validation path ran.
+
+#### Fixed
+- **[BE-SC-12]** Removed the fabricated Mercurius `MER-001` CustomizationID rule and `MERCURIUS_CUSTOMIZATION_ID` constant — Mercurius accepts standard Peppol BIS 3.0 UBL and does not define its own profile.
+- Mercurius `MER-002`/`MER-003` endpoint-scheme rules used `cac:EndpointID` instead of the correct UBL basic-component `cbc:EndpointID`, so they never matched even on correctly-tagged invoices. Fixed as part of BE-SC-12 verification.
+- **[BE-SC-13]** Removed the `BR-CO-15` XPath-presence-only fallback rule from `peppol_bis_3.py`; a weak presence check is no longer represented as arithmetic enforcement.
+- **[BE-LC-6]** `tools/lookup.py` now calls the public `client.request()` (added in core v1.15.0) instead of the private `client._request()`.
+
+#### Changed
+- **[BE-SC-11]** (partial — not fully resolved) `tools/validation.py` no longer silently degrades to XPath validation when no Schematron XSLT is bundled; raises loudly with a documented gap reference instead. Bundling an actual compiled Peppol BIS 3.0 Schematron XSLT remains open — OpenPeppol does not distribute one as a release asset.
+- Core dependency floor raised to `mcp-einvoicing-core>=1.15.0,<2.0.0`.
+
 ### [0.4.0] - 2026-06-30
 #### Added
 - **[BE-LC-5]** `parse_ubl_invoice_be` MCP tool for the mandatory UBL reception capability (Art. 13quater RD no. 1, RD of 8 July 2025). Extracts the EN 16931 core field set plus Belgian extensions (OGM/VCS reference, 0208 endpoint scheme) into a `be_extensions` dict.

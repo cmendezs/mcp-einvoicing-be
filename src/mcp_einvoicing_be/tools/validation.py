@@ -45,18 +45,39 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
-def _find_schematron_xslt() -> str | None:
+def _find_schematron_xslt(*, allow_fallback: bool = True) -> str | None:
     """Locate the pre-compiled Peppol BIS 3.0 Schematron XSLT in specs/.
 
     Returns the path to the XSLT file if found, None otherwise.
     Looks for common file patterns from the OpenPeppol release ZIP.
+
+    BE-SC-11 (partial): raises loudly instead of silently degrading when the
+    XSLT is absent and ``allow_fallback`` is False, so integrators relying on
+    real Schematron validation get an explicit signal rather than a silently
+    weaker XPath presence-check pass. ``[GAP id=core.schematron.be_bundled_xslt]``
+    — no compiled Peppol BIS 3.0 Schematron XSLT is currently bundled or
+    downloadable via ``specs/download.py`` (see module docstring there);
+    OpenPeppol distributes only uncompiled ``.sch`` sources under ``rules/``
+    that require their own trang/Saxon build pipeline to compile. Until that
+    artifact is sourced and verified, this always returns ``None`` and callers
+    fall back to the hand-coded XPath rule set.
     """
     if not PEPPOL_BIS3_DIR.is_dir():
+        if not allow_fallback:
+            raise FileNotFoundError(
+                f"Peppol BIS 3.0 Schematron XSLT not found under {PEPPOL_BIS3_DIR} "
+                "and allow_fallback=False. See [GAP id=core.schematron.be_bundled_xslt]."
+            )
         return None
     for pattern in ("*.xslt", "*.xsl"):
         matches = list(PEPPOL_BIS3_DIR.rglob(pattern))
         if matches:
             return str(matches[0])
+    if not allow_fallback:
+        raise FileNotFoundError(
+            f"Peppol BIS 3.0 Schematron XSLT not found under {PEPPOL_BIS3_DIR} "
+            "and allow_fallback=False. See [GAP id=core.schematron.be_bundled_xslt]."
+        )
     return None
 
 
@@ -68,9 +89,9 @@ class BEDocumentValidator(BaseDocumentValidator):
     XPath rule evaluation when the XSLT is not present.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, allow_fallback: bool = True) -> None:
         self._schematron = None
-        xslt_path = _find_schematron_xslt()
+        xslt_path = _find_schematron_xslt(allow_fallback=allow_fallback)
         if xslt_path:
             try:
                 from mcp_einvoicing_core.schematron import SchematronValidator  # noqa: PLC0415
@@ -112,7 +133,7 @@ class BEDocumentValidator(BaseDocumentValidator):
                     for m in svrl_result.messages
                     if m.severity == "warning"
                 ],
-                metadata={"profile": profile, "engine": "schematron"},
+                metadata={"profile": profile, "engine": "schematron-xslt"},
             )
 
         root, parse_error = parse_ubl_xml(xml)
@@ -141,7 +162,7 @@ class BEDocumentValidator(BaseDocumentValidator):
             valid=len(errors) == 0,
             errors=errors,
             warnings=warnings,
-            metadata={"profile": profile},
+            metadata={"profile": profile, "engine": "xpath-fallback"},
         )
 
     async def validate_invoice_be(

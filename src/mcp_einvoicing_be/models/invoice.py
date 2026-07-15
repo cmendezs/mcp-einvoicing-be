@@ -331,6 +331,19 @@ class BEInvoice(EN16931Invoice):
                 pass
         return self
 
+    @model_validator(mode="after")
+    def _populate_buyer_reference(self) -> BEInvoice:
+        """Copy ``buyer.reference`` (BT-10) into ``buyer_reference`` when unset.
+
+        BE-SC-10: the caller-facing Belgian party model exposes ``reference`` on
+        ``Customer``, but the EN 16931 wire formats emit ``<cbc:BuyerReference>``
+        from ``EN16931Invoice.buyer_reference``. Without this, a caller-supplied
+        buyer reference was silently dropped from the generated XML.
+        """
+        if self.buyer_reference is None and self.buyer.reference is not None:
+            self.buyer_reference = self.buyer.reference
+        return self
+
 
 # Re-export the core validation result — no Belgium-specific fields needed.
 ValidationResult = DocumentValidationResult

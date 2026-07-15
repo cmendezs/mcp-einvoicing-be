@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-einvoicing-be"
-version = "0.4.1"
+version = "0.5.0"
 description = "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -36,7 +36,7 @@ classifiers = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "mcp-einvoicing-core>=1.13.0,<2.0.0",
+    "mcp-einvoicing-core>=1.15.0,<2.0.0",
     "pydantic>=2.0.0",
     "lxml>=5.0.0",
 ]

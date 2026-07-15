@@ -15,6 +15,19 @@ Sources:
 - https://docs.peppol.eu/poacc/billing/3.0/  (spec reference)
 - https://github.com/OpenPeppol/poacc-upgrade-3/releases  (Schematron)
 - https://docs.oasis-open.org/ubl/os-UBL-2.1/  (UBL XSD)
+
+[GAP id=core.schematron.be_bundled_xslt] (verified 2026-07-15): the release
+URL below (release-3.0.17) does not exist — verified against the GitHub
+Releases API, which lists no version past v3.0.15 and, more importantly, no
+release in this repository has ever carried binary assets (`assets: []` on
+every entry checked). OpenPeppol publishes only uncompiled Schematron
+`.sch` sources under `rules/` in the repo tree; producing a compiled XSLT
+requires running the project's own `build.sh` (trang/Saxon toolchain), which
+is not reproduced here to avoid shipping an unverified compiled ruleset for
+a compliance-critical validator. `download_peppol_bis3()` below is disabled
+pending a verified source for the compiled artifact — see BE-SC-11 in
+`context-library/roadmap-2026.md`. `tools/validation.py::_find_schematron_xslt`
+already fails loudly (`allow_fallback=False`) rather than silently degrading.
 """
 
 from __future__ import annotations
@@ -41,12 +54,20 @@ def _download(url: str, dest: Path) -> None:
 
 
 def download_peppol_bis3() -> None:
-    """Download the Peppol BIS Billing 3.0 Schematron release ZIP."""
-    dest = PEPPOL_BIS3_DIR / f"poacc-billing-{PEPPOL_BIS3_RELEASE}.zip"
-    if dest.exists():
-        print(f"  [skip] {dest.name} already present")
-        return
-    _download(PEPPOL_BIS3_SCHEMATRON_URL, dest)
+    """Download the Peppol BIS Billing 3.0 Schematron release ZIP.
+
+    Disabled: PEPPOL_BIS3_SCHEMATRON_URL does not resolve to a real asset
+    (see [GAP id=core.schematron.be_bundled_xslt] in the module docstring).
+    Raises instead of silently writing a 404 error page as a .zip file.
+    """
+    raise RuntimeError(
+        "Peppol BIS 3.0 Schematron download is disabled: no verified source "
+        "for a compiled XSLT artifact is currently known. "
+        "See [GAP id=core.schematron.be_bundled_xslt] in this module's docstring "
+        "and BE-SC-11 in context-library/roadmap-2026.md. "
+        "mcp_einvoicing_be.tools.validation falls back to hand-coded XPath rules "
+        "until this is resolved."
+    )
 
 
 def download_ubl_xsd() -> None:

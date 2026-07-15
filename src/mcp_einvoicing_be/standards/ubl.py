@@ -19,7 +19,7 @@ from mcp_einvoicing_core.en16931 import EN16931Invoice
 from mcp_einvoicing_core.wire_formats import UBL_NSMAP, EN16931UBLParser, EN16931UBLSerializer
 
 from mcp_einvoicing_be.models.invoice import BEInvoice
-from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS
+from mcp_einvoicing_be.standards.peppol_bis_3 import CUSTOMIZATION_IDS, PROFILE_IDS
 
 # Backward-compatibility alias — importers of UBL_NAMESPACES are not broken.
 UBL_NAMESPACES: dict[str, str] = dict(UBL_NSMAP)
@@ -35,10 +35,12 @@ def _be_invoice_to_en16931(invoice: BEInvoice) -> EN16931Invoice:
     totals and VAT breakdown are already computed and stored on the BEInvoice
     instance by its before-validator (_derive_en16931_fields).
 
-    The two remaining transformations are:
+    The remaining transformations are:
     1.  Resolve the short profile key to the full CustomizationID URN (BT-24).
         The core UBL serializer emits profile verbatim as <cbc:CustomizationID>.
-    2.  Strip Belgian-only fields (lines, payment, payment_means_code) that are
+    2.  Resolve the short profile key to the full ProfileID URN (BT-23), emitted
+        by the core UBL serializer as <cbc:ProfileID> (BE-SC-9, core v1.15.0).
+    3.  Strip Belgian-only fields (lines, payment, payment_means_code) that are
         not part of the EN16931Invoice schema.
 
     The seller and buyer are BEParty(EN16931Party) subclasses.  When serialised
@@ -48,6 +50,7 @@ def _be_invoice_to_en16931(invoice: BEInvoice) -> EN16931Invoice:
     """
     data = invoice.model_dump(by_alias=False)
     data["profile"] = CUSTOMIZATION_IDS[invoice.profile]
+    data["business_process"] = PROFILE_IDS[invoice.profile]
     for key in _BE_ONLY_FIELDS:
         data.pop(key, None)
     return EN16931Invoice.model_validate(data)

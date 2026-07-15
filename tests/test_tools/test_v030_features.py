@@ -82,6 +82,46 @@ class TestBuyerReference:
         xml_str = BEUBLSerializer().serialize_be_str(invoice)
         assert "<cbc:BuyerReference>PO-12345</cbc:BuyerReference>" in xml_str
 
+    def test_buyer_dot_reference_populates_buyer_reference(self, minimal_invoice_data):
+        """BE-SC-10: Customer.reference (BT-10) auto-populates top-level buyer_reference."""
+        data = {
+            **minimal_invoice_data,
+            "buyer": {**minimal_invoice_data["buyer"], "reference": "PO-REF-9"},
+        }
+        invoice = BEInvoice.model_validate(data)
+        assert invoice.buyer_reference == "PO-REF-9"
+        xml_str = BEUBLSerializer().serialize_be_str(invoice)
+        assert "<cbc:BuyerReference>PO-REF-9</cbc:BuyerReference>" in xml_str
+
+    def test_explicit_buyer_reference_wins_over_buyer_dot_reference(self, minimal_invoice_data):
+        data = {
+            **minimal_invoice_data,
+            "buyer": {**minimal_invoice_data["buyer"], "reference": "PO-FROM-PARTY"},
+            "buyer_reference": "PO-EXPLICIT",
+        }
+        invoice = BEInvoice.model_validate(data)
+        assert invoice.buyer_reference == "PO-EXPLICIT"
+
+
+# ---------------------------------------------------------------------------
+# BE-SC-9 — ProfileID (BT-23) emission
+# ---------------------------------------------------------------------------
+
+
+class TestProfileIdEmission:
+    def test_peppol_bis_3_profile_id(self, minimal_invoice_data):
+        invoice = BEInvoice.model_validate(minimal_invoice_data)
+        xml_str = BEUBLSerializer().serialize_be_str(invoice)
+        assert (
+            "<cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>" in xml_str
+        )
+
+    def test_pint_eu_profile_id(self, minimal_invoice_data):
+        data = {**minimal_invoice_data, "profile": "pint-eu"}
+        invoice = BEInvoice.model_validate(data)
+        xml_str = BEUBLSerializer().serialize_be_str(invoice)
+        assert "<cbc:ProfileID>urn:peppol:pint:billing-1</cbc:ProfileID>" in xml_str
+
 
 # ---------------------------------------------------------------------------
 # BE-SC-8 — buyer_article_id (BT-156) end-to-end

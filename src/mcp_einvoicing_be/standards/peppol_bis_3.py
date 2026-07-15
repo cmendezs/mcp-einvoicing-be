@@ -69,12 +69,11 @@ PEPPOL_BIS3_RULES: list[dict[str, str]] = [
         "xpath": "/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
         "message": "An Invoice shall have an Amount due for payment (BT-115).",
     },
-    {
-        "id": "BR-CO-15",
-        "severity": "error",
-        "xpath": "/Invoice/cac:TaxTotal/cbc:TaxAmount",
-        "message": "Invoice total VAT amount shall equal the sum of VAT category tax amounts.",
-    },
+    # BR-CO-15 fallback presence check dropped in v0.5.0 (BE-SC-13) — it only
+    # verified the element was present and non-empty, not that the total VAT
+    # amount actually equals the sum of category tax amounts, which was
+    # misleading. Real arithmetic enforcement is deferred to the Peppol
+    # Schematron XSLT once BE-SC-11's bundling gap is resolved.
     {
         "id": "BR-BE-01",
         "severity": "error",

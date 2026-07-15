@@ -3,17 +3,15 @@
 Mercurius is the Belgian public-sector e-invoicing platform operated by the
 Federal Service of ICT (Fedict/DG DT). It is the mandatory channel for
 submitting electronic invoices to Belgian federal public authorities and is
-interconnected with the Peppol network.
+interconnected with the Peppol network. Mercurius accepts standard Peppol
+BIS 3.0 UBL — it does not define its own CustomizationID/extension profile;
+routing to Mercurius is automatic based on the 0208 (Belgian KBO/BCE)
+endpoint scheme (BE-SC-12).
 
 Specification: https://www.mercurius.be
 """
 
 from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
-
-MERCURIUS_CUSTOMIZATION_ID = (
-    "urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"
-    "#extended#urn:www.mercurius.be:1.0"
-)
 
 MERCURIUS_PROFILE_ID = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
 
@@ -24,15 +22,12 @@ MERCURIUS_PARTICIPANT_SCHEME = "0208"
 MERCURIUS_RULES: list[dict[str, str]] = [
     *PEPPOL_BIS3_RULES,
     {
-        "id": "MER-001",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:CustomizationID",
-        "message": ("Invoices submitted to Mercurius shall use the Mercurius CustomizationID."),
-    },
-    {
         "id": "MER-002",
         "severity": "error",
-        "xpath": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:EndpointID[@schemeID='0208']",
+        # EndpointID is a UBL basic component (cbc:), not aggregate (cac:) — a
+        # pre-existing namespace-prefix bug meant this rule never matched even
+        # a correctly 0208-tagged buyer endpoint. Fixed alongside BE-SC-12.
+        "xpath": "/Invoice/cac:AccountingCustomerParty/cac:Party/cbc:EndpointID[@schemeID='0208']",
         "message": (
             "The buyer endpoint shall be a Belgian KBO/BCE number (scheme 0208) "
             "registered on the Mercurius platform."
@@ -41,7 +36,7 @@ MERCURIUS_RULES: list[dict[str, str]] = [
     {
         "id": "MER-003",
         "severity": "error",
-        "xpath": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:EndpointID",
+        "xpath": "/Invoice/cac:AccountingSupplierParty/cac:Party/cbc:EndpointID",
         "message": (
             "The supplier shall have a Peppol endpoint registered on the Mercurius network."
         ),

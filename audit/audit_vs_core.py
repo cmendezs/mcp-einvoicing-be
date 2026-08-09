@@ -99,6 +99,10 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # PINT-BE, which is signed at the AS4 transport level
         "XMLDSigSigner",
         "XMLDSigSignerConfig",
+        # OVERRIDE-REASON: load_certificate_der (core v1.16.0) is a helper for
+        # country packages building custom auth claims from a cert's public
+        # bytes (e.g. ES FACe's JWS "username" claim); BE has no such flow.
+        "load_certificate_der",
         # OVERRIDE-REASON: stdlib/third-party re-exports in digital_signature; BE imports these from source directly
         "ABC",
         "abstractmethod",
@@ -156,6 +160,9 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "TokenCache",
         # OVERRIDE-REASON: AuthenticationError re-exported by http_client; already overridden in exceptions — no auth path in BE
         "AuthenticationError",
+        # OVERRIDE-REASON: JWSConfig (core v1.16.0) configures RS256/x5c JWT
+        # auth for platforms like ES FACe; BE's Peppol/BCE lookups need no such auth mode
+        "JWSConfig",
         # OVERRIDE-REASON: stdlib/third-party re-exports in http_client; BE imports from source directly
         "Any",
         "BaseModel",

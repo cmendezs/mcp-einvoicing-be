@@ -89,7 +89,7 @@ Voor een lokale ontwikkelingsinstallatie:
 
 ### `validate_invoice_be`
 
-Valideert een UBL 2.1 XML-factuur volgens de Belgische bedrijfsregels (EN 16931 + Peppol BIS 3.0 + Mercurius-laag).
+Valideert een UBL 2.1 XML-factuur. De profielen `peppol-bis-3`/`pint-eu` geven een expliciet "niet beschikbaar"-resultaat totdat een echt gecompileerd Peppol BIS 3.0 Schematron-artefact beschikbaar is (er wordt geen pakket-lokale benadering gebruikt — zie CHANGELOG.md v0.7.0). Het profiel `mercurius` voert de Mercurius-specifieke laag uit (eindpuntschema, bestelreferentie) maar controleert geen basis EN 16931/Peppol BIS 3.0-conformiteit.
 
 | Parameter | Type | Vereist | Beschrijving |
 |---|---|---|---|
@@ -246,8 +246,7 @@ mcp-einvoicing-be/
 - Gemeenschappelijke Pydantic-basismodellen (`BaseInvoice`, `BaseParty`, `BaseValidationResult`)
 
 `mcp-einvoicing-be` voegt Belgie-specifieke logica toe:
-- Peppol BIS 3.0 bedrijfsregelvalidatie (XPath-gebaseerd)
-- Mercurius-netwerklaagregels voor B2G-facturatie
+- Mercurius-netwerklaagregelvalidatie (XPath-gebaseerd) voor B2G-facturatie
 - BCE/KBO-ondernemingsdatabank-integratie
 - Belgische btw-nummernormalisatie (BTW/TVA-formaat) en OGM/VCS controlegetal-validatie
 - UBL 2.1 factuuranalyse voor verplichte ontvangst (Art. 13quater)

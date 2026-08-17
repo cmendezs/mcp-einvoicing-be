@@ -14,6 +14,16 @@ PROFILE_IDS: dict[str, str] = {
 
 # Peppol BIS 3.0 business rules subset relevant to Belgium.
 # Each entry has: id, severity, xpath (tested element), message.
+#
+# IDs and content below were verified against the OpenPeppol 3.0.20 release
+# artefacts (specs/peppol_bis_3/CEN-EN16931-UBL.sch, PEPPOL-EN16931-UBL.sch).
+# The previous revision paired real CEN/Peppol rule IDs with the wrong rule
+# content (e.g. its "BR-02" tested ProfileID/BT-23, but the real BR-02 tests
+# the Invoice number/BT-1; the real BT-23 check is the Peppol-specific rule
+# PEPPOL-EN16931-R001, not a CEN BR-* id at all) — every entry from the old
+# "BR-02" onward was shifted by one against the real rule set. This is only a
+# fallback layer: when the bundled Schematron XSLT loads (see
+# tools/validation.py), that engine runs the full official ruleset instead.
 PEPPOL_BIS3_RULES: list[dict[str, str]] = [
     {
         "id": "BR-01",
@@ -22,52 +32,52 @@ PEPPOL_BIS3_RULES: list[dict[str, str]] = [
         "message": "An Invoice shall have a Specification identifier (BT-24).",
     },
     {
-        "id": "BR-02",
+        "id": "PEPPOL-EN16931-R001",
         "severity": "error",
         "xpath": "/Invoice/cbc:ProfileID",
-        "message": "An Invoice shall have a Profile identifier (BT-23).",
+        "message": "Business process (Profile identifier, BT-23) MUST be provided.",
     },
     {
-        "id": "BR-03",
+        "id": "BR-02",
         "severity": "error",
         "xpath": "/Invoice/cbc:ID",
         "message": "An Invoice shall have an Invoice number (BT-1).",
     },
     {
-        "id": "BR-04",
+        "id": "BR-03",
         "severity": "error",
         "xpath": "/Invoice/cbc:IssueDate",
         "message": "An Invoice shall have an Invoice issue date (BT-2).",
     },
     {
-        "id": "BR-05",
+        "id": "BR-04",
         "severity": "error",
         "xpath": "/Invoice/cbc:InvoiceTypeCode",
         "message": "An Invoice shall have an Invoice type code (BT-3).",
     },
     {
-        "id": "BR-06",
+        "id": "BR-05",
         "severity": "error",
         "xpath": "/Invoice/cbc:DocumentCurrencyCode",
         "message": "An Invoice shall have an Invoice currency code (BT-5).",
     },
     {
+        "id": "BR-06",
+        "severity": "error",
+        "xpath": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
+        "message": "An Invoice shall contain the Seller name (BT-27).",
+    },
+    {
         "id": "BR-07",
         "severity": "error",
-        "xpath": "/Invoice/cac:AccountingSupplierParty",
-        "message": "An Invoice shall have a Seller (BG-4).",
+        "xpath": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
+        "message": "An Invoice shall contain the Buyer name (BT-44).",
     },
     {
-        "id": "BR-08",
-        "severity": "error",
-        "xpath": "/Invoice/cac:AccountingCustomerParty",
-        "message": "An Invoice shall have a Buyer (BG-7).",
-    },
-    {
-        "id": "BR-09",
+        "id": "BR-15",
         "severity": "error",
         "xpath": "/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
-        "message": "An Invoice shall have an Amount due for payment (BT-115).",
+        "message": "An Invoice shall have the Amount due for payment (BT-115).",
     },
     # BR-CO-15 fallback presence check dropped in v0.5.0 (BE-SC-13) — it only
     # verified the element was present and non-empty, not that the total VAT

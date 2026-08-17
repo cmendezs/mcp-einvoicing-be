@@ -227,13 +227,18 @@ class TestEvaluateRule:
   <cbc:DocumentCurrencyCode>EUR</cbc:DocumentCurrencyCode>
   <cac:AccountingSupplierParty>
     <cac:Party>
+      <cac:PartyLegalEntity><cbc:RegistrationName>Acme NV</cbc:RegistrationName></cac:PartyLegalEntity>
       <cac:PartyTaxScheme>
         <cbc:CompanyID>BE0428759497</cbc:CompanyID>
         <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
       </cac:PartyTaxScheme>
     </cac:Party>
   </cac:AccountingSupplierParty>
-  <cac:AccountingCustomerParty><cac:Party/></cac:AccountingCustomerParty>
+  <cac:AccountingCustomerParty>
+    <cac:Party>
+      <cac:PartyLegalEntity><cbc:RegistrationName>Client SPRL</cbc:RegistrationName></cac:PartyLegalEntity>
+    </cac:Party>
+  </cac:AccountingCustomerParty>
   <cac:TaxTotal><cbc:TaxAmount currencyID="EUR">210.00</cbc:TaxAmount></cac:TaxTotal>
   <cac:LegalMonetaryTotal><cbc:PayableAmount currencyID="EUR">1210.00</cbc:PayableAmount></cac:LegalMonetaryTotal>
 </Invoice>"""
@@ -257,11 +262,11 @@ class TestEvaluateRule:
         result = await self._val.validate_invoice_be(xml=self.MISSING_ID_UBL)
         assert result["valid"] is False
         errors = result["errors"]
-        assert any("BR-03" in e for e in errors), f"BR-03 not in: {errors}"
+        assert any("BR-02" in e for e in errors), f"BR-02 not in: {errors}"
 
     @pytest.mark.asyncio
     async def test_missing_supplier_produces_error(self):
         result = await self._val.validate_invoice_be(xml=self.MISSING_ID_UBL)
         assert result["valid"] is False
         errors = result["errors"]
-        assert any("BR-07" in e or "BR-08" in e for e in errors)
+        assert any("BR-06" in e for e in errors)

@@ -1,11 +1,32 @@
 """Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core.
 
 Two validation paths:
-1. Schematron XSLT (if downloaded via specs/download.py): delegates to core
-   SchematronValidator for full Peppol BIS 3.0 rule coverage.
+1. Schematron XSLT (if downloaded via specs/download.py): delegates to core's
+   load_schematron_validator() for full Peppol BIS 3.0 rule coverage.
 2. XPath fallback: evaluates hand-coded rules when Schematron XSLT is absent.
 
 BE-SC-1 (resolved): _evaluate_rule uses real lxml XPath evaluation.
+
+[GAP id=core.schematron.be_bundled_xslt] (still open): no compiled,
+SVRL-producing Peppol BIS 3.0 Schematron XSLT is bundled or downloadable via
+``specs/download.py``. specs/peppol_bis_3/ currently ships only
+CEN-EN16931-UBL.sch (an uncompiled Schematron *source*, EUPL 1.2 licensed).
+The OpenPeppol 3.0.20 (2025 November) release bundle used to verify this
+package's rules also contained PEPPOL-EN16931-UBL.sch and a
+stylesheet-ubl.xslt — the latter was verified (2026-08-17) to be a
+UBL-invoice-to-HTML *viewer* stylesheet, not a Schematron/SVRL validator
+(running it against a test invoice returns an HTML document, not SVRL
+findings). Neither file is bundled here: PEPPOL-EN16931-UBL.sch's license is
+unclear ("reproduced with permission from CEN", no redistribution terms
+stated) and stylesheet-ubl.xslt carries no license at all — both are pending
+explicit confirmation before shipping in a published wheel. Turning the .sch
+sources into a working SVRL-producing XSLT also still requires a Trang/Saxon
+Schematron-compilation build step this package does not yet have.
+``_find_schematron_xslt`` excludes any stylesheet-ubl.xslt found under
+specs/peppol_bis_3/ by name as a defensive guard, so it is never mistaken for
+a compiled Schematron if one is added back later; callers keep using the
+hand-coded XPath rule set below until a real, properly licensed compiled
+artifact is sourced and verified.
 """
 
 from __future__ import annotations
@@ -45,34 +66,35 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
 }
 
 
+#: Filenames known to be non-Schematron XSLTs that OpenPeppol ships alongside
+#: the real Schematron sources in the same release bundle. "stylesheet-ubl.xslt"
+#: is a UBL-invoice-to-HTML viewer (verified 2026-08-17: it emits a rendered
+#: HTML document, not SVRL) — excluded so it is never mistaken for a compiled
+#: Schematron. See [GAP id=core.schematron.be_bundled_xslt].
+_NON_SCHEMATRON_XSLT_NAMES = {"stylesheet-ubl.xslt"}
+
+
 def _find_schematron_xslt(*, allow_fallback: bool = True) -> str | None:
     """Locate the pre-compiled Peppol BIS 3.0 Schematron XSLT in specs/.
 
     Returns the path to the XSLT file if found, None otherwise.
-    Looks for common file patterns from the OpenPeppol release ZIP.
+    Looks for common file patterns from the OpenPeppol release ZIP, excluding
+    known non-Schematron XSLTs (see _NON_SCHEMATRON_XSLT_NAMES).
 
     BE-SC-11 (partial): raises loudly instead of silently degrading when the
     XSLT is absent and ``allow_fallback`` is False, so integrators relying on
     real Schematron validation get an explicit signal rather than a silently
-    weaker XPath presence-check pass. ``[GAP id=core.schematron.be_bundled_xslt]``
-    — no compiled Peppol BIS 3.0 Schematron XSLT is currently bundled or
-    downloadable via ``specs/download.py`` (see module docstring there);
-    OpenPeppol distributes only uncompiled ``.sch`` sources under ``rules/``
-    that require their own trang/Saxon build pipeline to compile. Until that
-    artifact is sourced and verified, this always returns ``None`` and callers
-    fall back to the hand-coded XPath rule set.
+    weaker XPath presence-check pass.
     """
-    if not PEPPOL_BIS3_DIR.is_dir():
-        if not allow_fallback:
-            raise FileNotFoundError(
-                f"Peppol BIS 3.0 Schematron XSLT not found under {PEPPOL_BIS3_DIR} "
-                "and allow_fallback=False. See [GAP id=core.schematron.be_bundled_xslt]."
-            )
-        return None
-    for pattern in ("*.xslt", "*.xsl"):
-        matches = list(PEPPOL_BIS3_DIR.rglob(pattern))
-        if matches:
-            return str(matches[0])
+    if PEPPOL_BIS3_DIR.is_dir():
+        for pattern in ("*.xslt", "*.xsl"):
+            matches = [
+                p
+                for p in PEPPOL_BIS3_DIR.rglob(pattern)
+                if p.name not in _NON_SCHEMATRON_XSLT_NAMES
+            ]
+            if matches:
+                return str(matches[0])
     if not allow_fallback:
         raise FileNotFoundError(
             f"Peppol BIS 3.0 Schematron XSLT not found under {PEPPOL_BIS3_DIR} "
@@ -94,10 +116,20 @@ class BEDocumentValidator(BaseDocumentValidator):
         xslt_path = _find_schematron_xslt(allow_fallback=allow_fallback)
         if xslt_path:
             try:
-                from mcp_einvoicing_core.schematron import SchematronValidator  # noqa: PLC0415
+                from mcp_einvoicing_core.schematron import (  # noqa: PLC0415
+                    load_schematron_validator,
+                )
 
-                self._schematron = SchematronValidator(xslt_path)
+                self._schematron = load_schematron_validator(xslt_path)
                 _log.info("Loaded Peppol BIS 3.0 Schematron from %s", xslt_path)
+            except ImportError as exc:
+                _log.warning(
+                    "Peppol BIS 3.0 Schematron at %s requires XSLT 2.0 (Saxon-HE); "
+                    "install mcp-einvoicing-core[xslt2] to enable it. Falling back "
+                    "to hand-coded XPath rules. %s",
+                    xslt_path,
+                    exc,
+                )
             except Exception as exc:
                 _log.warning("Failed to load Schematron XSLT %s: %s", xslt_path, exc)
 
@@ -120,19 +152,11 @@ class BEDocumentValidator(BaseDocumentValidator):
         """
         if self._schematron and profile in ("peppol-bis-3", "pint-eu"):
             xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
-            svrl_result = self._schematron.validate(xml_bytes, profile=profile)
+            result = self._schematron.validate(xml_bytes, profile=profile)
             return DocumentValidationResult(
-                valid=svrl_result.is_valid,
-                errors=[
-                    f"{m.rule_id}: {m.message}"
-                    for m in svrl_result.messages
-                    if m.severity == "error"
-                ],
-                warnings=[
-                    f"{m.rule_id}: {m.message}"
-                    for m in svrl_result.messages
-                    if m.severity == "warning"
-                ],
+                valid=result.is_valid,
+                errors=[f"{m.rule_id}: {m.text}" for m in result.errors],
+                warnings=[f"{m.rule_id}: {m.text}" for m in result.warnings],
                 metadata={"profile": profile, "engine": "schematron-xslt"},
             )
 

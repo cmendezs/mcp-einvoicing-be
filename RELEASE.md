@@ -41,6 +41,18 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.6.0] - 2026-08-17
+#### Fixed
+- **[BE-SC-11]** `standards/peppol_bis_3.py`: `PEPPOL_BIS3_RULES` had every rule from the old `BR-02` onward paired with the wrong CEN/Peppol rule content (a pre-existing mislabeling, not introduced by this release) — relabeled against the real Peppol BIS 3.0 3.0.20 Schematron; added `PEPPOL-EN16931-R001` for the Profile identifier (BT-23) check, which is a Peppol-specific rule, not a CEN `BR-*` id.
+- `tools/validation.py`: `_validate_with_profile`'s Schematron-result branch referenced `svrl_result.messages`/`m.message`, fields that do not exist on core's `ValidationResult`/`ValidationMessage` (`.errors`/`.warnings` of `.text`) — dead code, never exercised because no XSLT was ever bundled, would have raised `AttributeError` on first real use.
+
+#### Changed
+- `tools/validation.py`: `BEDocumentValidator.__init__` now uses core's `load_schematron_validator()` auto-dispatch (XSLT 1.0 vs. Saxon/XSLT 2.0+) instead of hardcoding the XSLT-1-only `SchematronValidator`. Added optional `xslt2` extra (`mcp-einvoicing-core[xslt2]`).
+- Peppol BIS Billing 3.0 pin bumped 3.0.17 → 3.0.20 (2025 November release). Closes `regulatory-update` issue #4.
+
+#### Known gap (unchanged)
+- **[BE-SC-11]** remains open: no compiled, SVRL-producing Schematron XSLT is bundled. The 3.0.20 release bundle sourced for this refresh contained only the Schematron *sources* (`.sch`) plus a UBL-invoice-to-HTML viewer stylesheet (verified not to be a validator) — `validate_invoice_be` continues to run the (now-corrected) XPath fallback. Only `CEN-EN16931-UBL.sch` (EUPL 1.2 licensed) is bundled; `PEPPOL-EN16931-UBL.sch` and the viewer stylesheet were excluded pending redistribution-license confirmation. See `context-library/roadmap-2026.md` → `[CORE-PEPPOL-SCHEMATRON-1]`.
+
 ### [0.5.0] - 2026-07-15
 #### Added
 - **[BE-SC-9]** `standards/ubl.py` now populates `business_process` (BT-23) from the profile's `PROFILE_IDS` mapping, consuming `mcp-einvoicing-core>=1.15.0`; emitted as `<cbc:ProfileID>`.

@@ -9,18 +9,28 @@ routing to Mercurius is automatic based on the 0208 (Belgian KBO/BCE)
 endpoint scheme (BE-SC-12).
 
 Specification: https://www.mercurius.be
-"""
 
-from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
+MERCURIUS_RULES scope (v0.7.0): this used to splice in the package's own
+hand-rolled Peppol BIS 3.0 base-rule approximation (PEPPOL_BIS3_RULES) ahead
+of the Mercurius-specific overlay below. That base list was removed (see
+standards/peppol_bis_3.py) — MERCURIUS_RULES now contains only the
+Mercurius-specific overlay (MER-002/003/004), which is genuinely BE-local and
+not duplicated in any other package. Base EN16931/Peppol BIS 3.0 compliance
+is NOT checked by the mercurius profile; tools/validation.py adds an explicit
+warning to every mercurius result saying so, rather than implying full
+coverage. Once context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]
+ships a shared base validator, this overlay should layer on top of that
+instead of standing alone.
+"""
 
 MERCURIUS_PROFILE_ID = "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0"
 
 # Mercurius requires a specific endpoint scheme for Belgian public authorities.
 MERCURIUS_PARTICIPANT_SCHEME = "0208"
 
-# Mercurius overlay rules on top of Peppol BIS 3.0.
+# Mercurius-specific overlay rules. Does NOT include Peppol BIS 3.0 base
+# checks — see the module docstring above.
 MERCURIUS_RULES: list[dict[str, str]] = [
-    *PEPPOL_BIS3_RULES,
     {
         "id": "MER-002",
         "severity": "error",

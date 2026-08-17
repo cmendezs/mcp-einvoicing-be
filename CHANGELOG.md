@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0] — 2026-08-17
+
+### Removed
+- `PEPPOL_BIS3_RULES` (the package's hand-rolled Peppol BIS 3.0 base-rule approximation) removed entirely, rather than kept as the "fixed" version shipped in v0.6.0. It covered only ~10 of the ~50+ real CEN/Peppol rules (no arithmetic/totals checks) and had just been found to carry a rule-ID mislabeling bug — a package-local partial duplication of rules that are identical across every Peppol-BIS3-consuming country is a recurring source of exactly this class of bug. See `context-library/roadmap-2026.md` **[CORE-PEPPOL-SCHEMATRON-1]**.
+
+### Changed
+- `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns an explicit unavailable result (`valid=False`, an error explaining why, `metadata.engine="unavailable"`) when no real compiled Schematron is loaded, instead of a silently-partial pass/fail. A false "valid" from an incomplete rule set is worse than a clear "cannot validate" signal for a compliance tool.
+- `standards/mercurius.py`'s `MERCURIUS_RULES` no longer splices in `PEPPOL_BIS3_RULES` — it now contains only the Mercurius-specific overlay (`MER-002`/`MER-003`/`MER-004`), which is genuinely BE-local and was not part of the cross-country duplication problem. Every `mercurius`-profile result now carries an explicit `MERCURIUS-SCOPE` warning stating that base EN16931/Peppol BIS 3.0 compliance is not checked by this profile, since it no longer runs those checks at all.
+
+### Fixed
+- `mercurius` profile validation was silently affected by the same rule-ID mislabeling bug fixed in v0.6.0, since `MERCURIUS_RULES` previously spliced in `PEPPOL_BIS3_RULES` directly. Moot now that the splice is removed.
+
+---
+
 ## [0.6.0] — 2026-08-17
 
 ### Fixed

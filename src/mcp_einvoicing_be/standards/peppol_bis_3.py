@@ -12,85 +12,16 @@ PROFILE_IDS: dict[str, str] = {
     "pint-eu": "urn:peppol:pint:billing-1",
 }
 
-# Peppol BIS 3.0 business rules subset relevant to Belgium.
-# Each entry has: id, severity, xpath (tested element), message.
-#
-# IDs and content below were verified against the OpenPeppol 3.0.20 release
-# artefacts (specs/peppol_bis_3/CEN-EN16931-UBL.sch, PEPPOL-EN16931-UBL.sch).
-# The previous revision paired real CEN/Peppol rule IDs with the wrong rule
-# content (e.g. its "BR-02" tested ProfileID/BT-23, but the real BR-02 tests
-# the Invoice number/BT-1; the real BT-23 check is the Peppol-specific rule
-# PEPPOL-EN16931-R001, not a CEN BR-* id at all) — every entry from the old
-# "BR-02" onward was shifted by one against the real rule set. This is only a
-# fallback layer: when the bundled Schematron XSLT loads (see
-# tools/validation.py), that engine runs the full official ruleset instead.
-PEPPOL_BIS3_RULES: list[dict[str, str]] = [
-    {
-        "id": "BR-01",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:CustomizationID",
-        "message": "An Invoice shall have a Specification identifier (BT-24).",
-    },
-    {
-        "id": "PEPPOL-EN16931-R001",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:ProfileID",
-        "message": "Business process (Profile identifier, BT-23) MUST be provided.",
-    },
-    {
-        "id": "BR-02",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:ID",
-        "message": "An Invoice shall have an Invoice number (BT-1).",
-    },
-    {
-        "id": "BR-03",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:IssueDate",
-        "message": "An Invoice shall have an Invoice issue date (BT-2).",
-    },
-    {
-        "id": "BR-04",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:InvoiceTypeCode",
-        "message": "An Invoice shall have an Invoice type code (BT-3).",
-    },
-    {
-        "id": "BR-05",
-        "severity": "error",
-        "xpath": "/Invoice/cbc:DocumentCurrencyCode",
-        "message": "An Invoice shall have an Invoice currency code (BT-5).",
-    },
-    {
-        "id": "BR-06",
-        "severity": "error",
-        "xpath": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
-        "message": "An Invoice shall contain the Seller name (BT-27).",
-    },
-    {
-        "id": "BR-07",
-        "severity": "error",
-        "xpath": "/Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName",
-        "message": "An Invoice shall contain the Buyer name (BT-44).",
-    },
-    {
-        "id": "BR-15",
-        "severity": "error",
-        "xpath": "/Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount",
-        "message": "An Invoice shall have the Amount due for payment (BT-115).",
-    },
-    # BR-CO-15 fallback presence check dropped in v0.5.0 (BE-SC-13) — it only
-    # verified the element was present and non-empty, not that the total VAT
-    # amount actually equals the sum of category tax amounts, which was
-    # misleading. Real arithmetic enforcement is deferred to the Peppol
-    # Schematron XSLT once BE-SC-11's bundling gap is resolved.
-    {
-        "id": "BR-BE-01",
-        "severity": "error",
-        "xpath": "/Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID",
-        "message": "Belgian invoices shall contain the supplier's VAT number (BTW/TVA).",
-    },
-]
+# PEPPOL_BIS3_RULES (a hand-rolled ~10-of-50+ rule XPath approximation of the
+# real CEN/Peppol Schematron) was removed in v0.7.0. It was the source of a
+# real bug (every rule ID from "BR-02" onward was paired with the wrong rule
+# content, fixed in v0.6.0) and, more fundamentally, a package-local partial
+# duplication of rules that are identical across every Peppol-BIS3-consuming
+# country — see context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1].
+# Rather than keep maintaining an incomplete, easy-to-mismatch approximation
+# per country package, mcp_einvoicing_be.tools.validation now reports
+# "unavailable" for peppol-bis-3/pint-eu when no real compiled Schematron is
+# loaded, instead of a partial pass/fail. See [GAP id=core.schematron.be_bundled_xslt].
 
 # Supported Belgian e-invoice document types
 INVOICE_TYPES: list[dict[str, object]] = [

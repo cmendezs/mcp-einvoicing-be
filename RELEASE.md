@@ -41,6 +41,14 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.7.0] - 2026-08-17
+#### Removed
+- **[BE-SC-11 follow-up]** `PEPPOL_BIS3_RULES` (hand-rolled Peppol BIS 3.0 base-rule approximation, ~10 of ~50+ real rules, no arithmetic checks) removed entirely rather than kept as the "fixed" version from v0.6.0 — a package-local partial duplication of rules identical across every Peppol-BIS3 country is a recurring bug source. See `context-library/roadmap-2026.md` **[CORE-PEPPOL-SCHEMATRON-1]**.
+
+#### Changed
+- `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns an explicit unavailable result (`valid=False`, `metadata.engine="unavailable"`) instead of a partial pass/fail when no compiled Schematron is loaded.
+- `standards/mercurius.py`'s `MERCURIUS_RULES` no longer splices in the removed base rules — only the Mercurius-specific overlay (`MER-002`/`MER-003`/`MER-004`) remains. Every `mercurius` result now carries a `MERCURIUS-SCOPE` warning noting base EN16931/Peppol compliance is not checked.
+
 ### [0.6.0] - 2026-08-17
 #### Fixed
 - **[BE-SC-11]** `standards/peppol_bis_3.py`: `PEPPOL_BIS3_RULES` had every rule from the old `BR-02` onward paired with the wrong CEN/Peppol rule content (a pre-existing mislabeling, not introduced by this release) — relabeled against the real Peppol BIS 3.0 3.0.20 Schematron; added `PEPPOL-EN16931-R001` for the Profile identifier (BT-23) check, which is a Peppol-specific rule, not a CEN `BR-*` id.

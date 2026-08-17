@@ -213,7 +213,30 @@ class TestReducedRateInvoice:
 
 
 class TestEvaluateRule:
+    """v0.7.0: PEPPOL_BIS3_RULES was removed (see standards/peppol_bis_3.py
+    and roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]), so validate_invoice_be's
+    peppol-bis-3 profile no longer runs _evaluate_rule at all — it reports an
+    explicit "unavailable" result instead (see test_validation.py). This class
+    now exercises _evaluate_rule directly against synthetic rule dicts to keep
+    covering the underlying lxml XPath evaluation mechanism (BE-SC-1)."""
+
     _val = BEDocumentValidator()
+
+    _ID_RULE = {
+        "id": "TEST-ID",
+        "severity": "error",
+        "xpath": "/Invoice/cbc:ID",
+        "message": "An Invoice shall have an Invoice number.",
+    }
+    _SUPPLIER_NAME_RULE = {
+        "id": "TEST-SUPPLIER-NAME",
+        "severity": "error",
+        "xpath": (
+            "/Invoice/cac:AccountingSupplierParty/cac:Party"
+            "/cac:PartyLegalEntity/cbc:RegistrationName"
+        ),
+        "message": "An Invoice shall contain the Seller name.",
+    }
 
     VALID_UBL = """<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
@@ -251,22 +274,26 @@ class TestEvaluateRule:
   <cbc:ProfileID>urn:fdc:peppol.eu:2017:poacc:billing:01:1.0</cbc:ProfileID>
 </Invoice>"""
 
-    @pytest.mark.asyncio
-    async def test_valid_xml_passes_all_rules(self):
-        result = await self._val.validate_invoice_be(xml=self.VALID_UBL)
-        assert result["valid"] is True
-        assert result["errors"] == []
+    def _root(self, xml: str):
+        from mcp_einvoicing_be.utils.helpers import parse_ubl_xml
 
-    @pytest.mark.asyncio
-    async def test_missing_invoice_id_produces_error(self):
-        result = await self._val.validate_invoice_be(xml=self.MISSING_ID_UBL)
-        assert result["valid"] is False
-        errors = result["errors"]
-        assert any("BR-02" in e for e in errors), f"BR-02 not in: {errors}"
+        root, parse_error = parse_ubl_xml(xml)
+        assert parse_error is None, parse_error
+        return root
 
-    @pytest.mark.asyncio
-    async def test_missing_supplier_produces_error(self):
-        result = await self._val.validate_invoice_be(xml=self.MISSING_ID_UBL)
-        assert result["valid"] is False
-        errors = result["errors"]
-        assert any("BR-06" in e for e in errors)
+    def test_valid_xml_passes_rules(self):
+        root = self._root(self.VALID_UBL)
+        assert self._val._evaluate_rule(root, self._ID_RULE) is None
+        assert self._val._evaluate_rule(root, self._SUPPLIER_NAME_RULE) is None
+
+    def test_missing_invoice_id_produces_violation(self):
+        root = self._root(self.MISSING_ID_UBL)
+        violation = self._val._evaluate_rule(root, self._ID_RULE)
+        assert violation is not None
+        assert "Invoice number" in violation
+
+    def test_missing_supplier_name_produces_violation(self):
+        root = self._root(self.MISSING_ID_UBL)
+        violation = self._val._evaluate_rule(root, self._SUPPLIER_NAME_RULE)
+        assert violation is not None
+        assert "Seller name" in violation

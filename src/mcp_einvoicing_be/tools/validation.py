@@ -1,9 +1,22 @@
 """Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core.
 
-Two validation paths:
+Two validation paths, and one explicit non-path:
 1. Schematron XSLT (if downloaded via specs/download.py): delegates to core's
-   load_schematron_validator() for full Peppol BIS 3.0 rule coverage.
-2. XPath fallback: evaluates hand-coded rules when Schematron XSLT is absent.
+   load_schematron_validator() for full Peppol BIS 3.0 rule coverage. Used for
+   peppol-bis-3/pint-eu when a real compiled Schematron is loaded.
+2. XPath overlay: evaluates hand-coded rules for the mercurius profile only
+   (MERCURIUS_RULES — Mercurius-specific checks, not a Peppol/EN16931 base
+   ruleset; see standards/mercurius.py).
+3. peppol-bis-3/pint-eu with no Schematron loaded: returns an explicit
+   "unavailable" result (valid=False, an error explaining why) rather than a
+   partial pass/fail. v0.7.0 removed the package's own hand-rolled Peppol
+   BIS 3.0 base-rule approximation (PEPPOL_BIS3_RULES) — it covered ~10 of the
+   ~50+ real CEN/Peppol rules, no arithmetic checks, and had carried a rule-ID
+   mislabeling bug (fixed in v0.6.0) before removal. A package-local partial
+   approximation of rules that are identical across every Peppol-BIS3-consuming
+   country is exactly the kind of drift context-library/roadmap-2026.md
+   [CORE-PEPPOL-SCHEMATRON-1] exists to close — see that entry before adding
+   a replacement fallback here or in any other package.
 
 BE-SC-1 (resolved): _evaluate_rule uses real lxml XPath evaluation.
 
@@ -12,7 +25,7 @@ SVRL-producing Peppol BIS 3.0 Schematron XSLT is bundled or downloadable via
 ``specs/download.py``. specs/peppol_bis_3/ currently ships only
 CEN-EN16931-UBL.sch (an uncompiled Schematron *source*, EUPL 1.2 licensed).
 The OpenPeppol 3.0.20 (2025 November) release bundle used to verify this
-package's rules also contained PEPPOL-EN16931-UBL.sch and a
+package's former rules also contained PEPPOL-EN16931-UBL.sch and a
 stylesheet-ubl.xslt — the latter was verified (2026-08-17) to be a
 UBL-invoice-to-HTML *viewer* stylesheet, not a Schematron/SVRL validator
 (running it against a test invoice returns an HTML document, not SVRL
@@ -24,9 +37,7 @@ sources into a working SVRL-producing XSLT also still requires a Trang/Saxon
 Schematron-compilation build step this package does not yet have.
 ``_find_schematron_xslt`` excludes any stylesheet-ubl.xslt found under
 specs/peppol_bis_3/ by name as a defensive guard, so it is never mistaken for
-a compiled Schematron if one is added back later; callers keep using the
-hand-coded XPath rule set below until a real, properly licensed compiled
-artifact is sourced and verified.
+a compiled Schematron if one is added back later.
 """
 
 from __future__ import annotations
@@ -42,13 +53,12 @@ from mcp_einvoicing_core import (
 
 from mcp_einvoicing_be.specs import PEPPOL_BIS3_DIR
 from mcp_einvoicing_be.standards.mercurius import MERCURIUS_RULES
-from mcp_einvoicing_be.standards.peppol_bis_3 import PEPPOL_BIS3_RULES
 from mcp_einvoicing_be.utils.helpers import parse_ubl_xml
 
 _log = logging.getLogger(__name__)
 
 # UBL 2.1 namespace map for lxml XPath evaluation.
-# Rules in PEPPOL_BIS3_RULES use absolute XPath starting with /Invoice/…;
+# Rules in MERCURIUS_RULES use absolute XPath starting with /Invoice/…;
 # the evaluator strips the /Invoice/ prefix and evaluates relative to the
 # Invoice root element to handle both namespace-qualified and unqualified roots.
 _UBL_NSMAP: dict[str, str] = {
@@ -59,11 +69,34 @@ _UBL_NSMAP: dict[str, str] = {
 
 ProfileLiteral = Literal["peppol-bis-3", "pint-eu", "mercurius"]
 
+# Only mercurius has a package-local XPath rule set. peppol-bis-3/pint-eu
+# validation is either the real Schematron (when loaded) or "unavailable" —
+# see the module docstring.
 _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
-    "peppol-bis-3": PEPPOL_BIS3_RULES,
-    "pint-eu": PEPPOL_BIS3_RULES,
     "mercurius": MERCURIUS_RULES,
 }
+
+# Emitted for peppol-bis-3/pint-eu when no compiled Schematron is loaded.
+_PEPPOL_VALIDATION_UNAVAILABLE = (
+    "PEPPOL-VALIDATION-UNAVAILABLE: no compiled Peppol BIS 3.0 Schematron "
+    "validator is available in this environment. This package no longer "
+    "carries a hand-rolled approximation (removed in v0.7.0 after a rule-ID "
+    "mislabeling bug — see CHANGELOG.md). See "
+    "[GAP id=core.schematron.be_bundled_xslt] and "
+    "context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]. Install "
+    "mcp-einvoicing-core[xslt2] and provide a properly licensed, compiled "
+    "SVRL-producing Schematron XSLT under specs/peppol_bis_3/ to enable "
+    "real validation."
+)
+
+# Added to every mercurius-profile result: MERCURIUS_RULES only covers the
+# Mercurius-specific overlay (endpoint scheme, PO reference), not full
+# EN16931/Peppol BIS 3.0 base compliance — see standards/mercurius.py.
+_MERCURIUS_SCOPE_WARNING = (
+    "MERCURIUS-SCOPE: this only checks the Mercurius-specific overlay "
+    "(endpoint scheme, PO reference). Base EN16931/Peppol BIS 3.0 invoice "
+    "compliance is not verified by this profile."
+)
 
 
 #: Filenames known to be non-Schematron XSLTs that OpenPeppol ships alongside
@@ -106,9 +139,11 @@ def _find_schematron_xslt(*, allow_fallback: bool = True) -> str | None:
 class BEDocumentValidator(BaseDocumentValidator):
     """Belgian document validator.
 
-    Uses the pre-compiled Peppol BIS 3.0 Schematron XSLT from specs/ when
-    available (downloaded via ``specs/download.py``). Falls back to hand-coded
-    XPath rule evaluation when the XSLT is not present.
+    peppol-bis-3/pint-eu: uses the pre-compiled Peppol BIS 3.0 Schematron XSLT
+    from specs/ when available (downloaded via ``specs/download.py``); returns
+    an explicit "unavailable" result when it is not present, rather than a
+    partial hand-coded approximation (see module docstring).
+    mercurius: always uses the hand-coded Mercurius-specific overlay rules.
     """
 
     def __init__(self, *, allow_fallback: bool = True) -> None:
@@ -147,17 +182,35 @@ class BEDocumentValidator(BaseDocumentValidator):
     def _validate_with_profile(self, xml: str, profile: str) -> DocumentValidationResult:
         """Core validation logic.
 
-        Uses Schematron XSLT when available for peppol-bis-3/pint-eu profiles,
-        falls back to hand-coded XPath rules otherwise.
+        - peppol-bis-3/pint-eu: real Schematron XSLT when loaded, otherwise an
+          explicit "unavailable" result (see module docstring).
+        - mercurius: XPath overlay rules (MERCURIUS_RULES) plus a scope warning.
+        - any other profile: explicit error, no silent default.
         """
-        if self._schematron and profile in ("peppol-bis-3", "pint-eu"):
-            xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
-            result = self._schematron.validate(xml_bytes, profile=profile)
+        if profile in ("peppol-bis-3", "pint-eu"):
+            if self._schematron:
+                xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
+                result = self._schematron.validate(xml_bytes, profile=profile)
+                return DocumentValidationResult(
+                    valid=result.is_valid,
+                    errors=[f"{m.rule_id}: {m.text}" for m in result.errors],
+                    warnings=[f"{m.rule_id}: {m.text}" for m in result.warnings],
+                    metadata={"profile": profile, "engine": "schematron-xslt"},
+                )
             return DocumentValidationResult(
-                valid=result.is_valid,
-                errors=[f"{m.rule_id}: {m.text}" for m in result.errors],
-                warnings=[f"{m.rule_id}: {m.text}" for m in result.warnings],
-                metadata={"profile": profile, "engine": "schematron-xslt"},
+                valid=False,
+                errors=[_PEPPOL_VALIDATION_UNAVAILABLE],
+                warnings=[],
+                metadata={"profile": profile, "engine": "unavailable"},
+            )
+
+        rules = _PROFILE_RULES.get(profile)
+        if rules is None:
+            return DocumentValidationResult(
+                valid=False,
+                errors=[f"UNKNOWN-PROFILE: {profile!r} is not a supported validation profile."],
+                warnings=[],
+                metadata={"profile": profile, "engine": "unavailable"},
             )
 
         root, parse_error = parse_ubl_xml(xml)
@@ -169,9 +222,8 @@ class BEDocumentValidator(BaseDocumentValidator):
                 metadata={"profile": profile},
             )
 
-        rules = _PROFILE_RULES.get(profile, PEPPOL_BIS3_RULES)
         errors: list[str] = []
-        warnings: list[str] = []
+        warnings: list[str] = [_MERCURIUS_SCOPE_WARNING] if profile == "mercurius" else []
 
         for rule in rules:
             violation = self._evaluate_rule(root, rule)

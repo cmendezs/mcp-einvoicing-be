@@ -89,7 +89,7 @@ Pour une installation de développement locale :
 
 ### `validate_invoice_be`
 
-Valide une facture XML UBL 2.1. Les profils `peppol-bis-3`/`pint-eu` renvoient un resultat explicite "indisponible" tant qu'un artefact Schematron Peppol BIS 3.0 compile n'est pas disponible (aucune approximation locale au paquet n'est utilisee — voir CHANGELOG.md v0.7.0). Le profil `mercurius` applique la couche specifique Mercurius (schema de point de terminaison, reference de bon de commande) mais ne verifie pas la conformite EN 16931/Peppol BIS 3.0 de base.
+Valide une facture XML UBL 2.1. Les profils `peppol-bis-3`/`pint-eu` executent une validation Schematron reelle sur les regles de base CEN EN 16931 (~50 regles structurelles/arithmetiques `BR-*`, via le Schematron de base fourni par `mcp-einvoicing-core` — voir CHANGELOG.md v0.8.0). Cela ne verifie pas les regles de la couche specifique Peppol (aucun droit de redistribution confirme aupres d'OpenPeppol) ; les resultats portent un avertissement explicite de portee `en16931-base-only` et ne doivent pas etre lus comme une conformite Peppol BIS3 complete. Le profil `mercurius` applique la couche specifique Mercurius (schema de point de terminaison, reference de bon de commande) mais ne verifie pas la conformite EN 16931/Peppol BIS 3.0 de base.
 
 | Parametre | Type | Requis | Description |
 |---|---|---|---|

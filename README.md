@@ -89,7 +89,7 @@ For a local development install:
 
 ### `validate_invoice_be`
 
-Validates a UBL 2.1 XML invoice. The `peppol-bis-3`/`pint-eu` profiles report an explicit "unavailable" result until a real compiled Peppol BIS 3.0 Schematron artifact is available (no package-local approximation is used — see CHANGELOG.md v0.7.0). The `mercurius` profile runs the Mercurius-specific overlay (endpoint scheme, PO reference) but does not check base EN 16931/Peppol BIS 3.0 compliance.
+Validates a UBL 2.1 XML invoice. The `peppol-bis-3`/`pint-eu` profiles run real Schematron validation against the CEN EN 16931 base rules (~50 `BR-*` structural/arithmetic rules, via `mcp-einvoicing-core`'s bundled base Schematron — see CHANGELOG.md v0.8.0). This does not check the Peppol-specific overlay rules (no confirmed OpenPeppol redistribution rights); results carry an explicit `en16931-base-only` scope warning and should not be read as full Peppol BIS3 conformance. The `mercurius` profile runs the Mercurius-specific overlay (endpoint scheme, PO reference) but does not check base EN 16931/Peppol BIS 3.0 compliance.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|

@@ -63,15 +63,17 @@ async def test_rejects_malformed_xml_mercurius(invalid_xml: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_peppol_bis_3_unavailable_without_schematron(invalid_xml: str) -> None:
-    """v0.7.0: peppol-bis-3/pint-eu report an explicit unavailable result
-    (not a parse attempt, not a partial pass/fail) when no compiled Schematron
-    is loaded — even malformed XML gets PEPPOL-VALIDATION-UNAVAILABLE, not
-    XML-PARSE, since validation never reaches the parse step."""
+async def test_peppol_bis_3_malformed_xml_reports_xml_parse_error(invalid_xml: str) -> None:
+    """v0.8.0 [CORE-EN16931-BASE-SCHEMATRON-1]: peppol-bis-3/pint-eu now run
+    real Schematron validation (core's bundled EN16931-base validator), so
+    malformed XML reaches the parse step and gets a real XML-PARSE finding
+    from the Schematron engine, not the old unconditional
+    PEPPOL-VALIDATION-UNAVAILABLE."""
     result = await _val.validate_invoice_be(xml=invalid_xml, profile="peppol-bis-3")
     assert result["valid"] is False
-    assert result["engine"] == "unavailable"
-    assert any("PEPPOL-VALIDATION-UNAVAILABLE" in str(m) for m in result["errors"])
+    assert result["engine"] == "schematron-xslt"
+    assert result["scope"] == "en16931-base-only"
+    assert any("XML-PARSE" in str(m) for m in result["errors"])
 
 
 @pytest.mark.asyncio
@@ -105,14 +107,41 @@ async def test_default_profile_is_peppol(invalid_xml: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_generate_validate_roundtrip_peppol_bis_3_unavailable() -> None:
-    """v0.7.0: with no real Schematron loaded, the peppol-bis-3 profile can no
-    longer claim its own generated output is valid — it reports unavailable
-    instead of a hand-rolled approximation's pass/fail."""
+async def test_generate_validate_roundtrip_peppol_bis_3_finds_real_gaps() -> None:
+    """v0.8.0 [CORE-EN16931-BASE-SCHEMATRON-1]: with real CEN EN16931 base
+    validation now running (instead of the old unconditional "unavailable"),
+    the minimal fixture invoice's real gaps surface: no payment account
+    identifier for the default SEPA credit-transfer payment means (BR-61),
+    and no PayableAmount due-date signal reaching the wire format (BR-CO-25 —
+    a known separate BE serializer bug where PaymentDueDate is emitted in
+    the wrong place; see the payment-bearing test below and the tracked
+    follow-up). This is a real improvement over both the old hand-rolled
+    approximation (which never checked either rule) and the old unconditional
+    "unavailable" (which caught neither)."""
     xml = _generated_invoice_xml()
     result = await _val.validate_invoice_be(xml=xml, profile="peppol-bis-3")
     assert result["valid"] is False
-    assert result["engine"] == "unavailable"
+    assert result["engine"] == "schematron-xslt"
+    assert result["scope"] == "en16931-base-only"
+    rule_ids = {str(e).split(":")[0] for e in result["errors"]}
+    assert "BR-CO-25" in rule_ids
+
+
+@pytest.mark.asyncio
+async def test_generate_validate_roundtrip_peppol_bis_3_fully_compliant() -> None:
+    """A payment-bearing fixture (IBAN + due_date set) is now fully compliant:
+    BR-61 (payment account identifier for SEPA credit transfer) and BR-CO-25
+    (due date or payment terms note required) both pass. BR-CO-25 previously
+    fired here due to a core wire_formats.py bug — EN16931UBLSerializer only
+    emitted <cbc:PaymentDueDate> inside PaymentMeans, never the top-level
+    <cbc:DueDate> that BR-CO-25 actually checks for — fixed in core
+    (mcp-einvoicing-core>=1.18.1). This proves the arithmetic/business-rule
+    checks this validator adds are real and discriminating, not just a
+    blanket failure."""
+    xml = _generated_invoice_xml(payment={"iban": "BE68539007547034", "due_date": "2024-02-15"})
+    result = await _val.validate_invoice_be(xml=xml, profile="peppol-bis-3")
+    assert result["valid"] is True, result["errors"]
+    assert result["errors"] == []
 
 
 @pytest.mark.asyncio
@@ -126,11 +155,14 @@ async def test_generate_validate_roundtrip_mercurius() -> None:
 
 
 @pytest.mark.asyncio
-async def test_metadata_engine_unavailable_when_no_schematron() -> None:
-    """BE-SC-11 / v0.7.0: metadata.engine reports which validation engine
-    actually ran. No compiled Schematron XSLT is bundled yet (see
-    [GAP id=core.schematron.be_bundled_xslt]), so peppol-bis-3 is
-    'unavailable' rather than a hand-rolled 'xpath-fallback'."""
+async def test_metadata_engine_schematron_xslt_en16931_base_only_scope() -> None:
+    """BE-SC-11 / v0.8.0 [CORE-EN16931-BASE-SCHEMATRON-1]: metadata.engine and
+    metadata.scope report which validation actually ran. Core's bundled
+    EN16931-base Schematron is always available now, so peppol-bis-3 reports
+    'schematron-xslt' / 'en16931-base-only' — real base validation, but
+    explicitly not full Peppol BIS3 conformance (no overlay rules checked)."""
     xml = _generated_invoice_xml()
     result = await _val.validate_invoice_be(xml=xml, profile="peppol-bis-3")
-    assert result["engine"] == "unavailable"
+    assert result["engine"] == "schematron-xslt"
+    assert result["scope"] == "en16931-base-only"
+    assert any("EN16931-BASE-ONLY-SCOPE" in str(w) for w in result["warnings"])

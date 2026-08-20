@@ -1,43 +1,53 @@
 """Belgian invoice validation — subclasses BaseDocumentValidator from mcp-einvoicing-core.
 
-Two validation paths, and one explicit non-path:
-1. Schematron XSLT (if downloaded via specs/download.py): delegates to core's
-   load_schematron_validator() for full Peppol BIS 3.0 rule coverage. Used for
-   peppol-bis-3/pint-eu when a real compiled Schematron is loaded.
-2. XPath overlay: evaluates hand-coded rules for the mercurius profile only
+Three validation paths for peppol-bis-3/pint-eu, tried in order, plus one
+package-local overlay:
+1. Local full Schematron XSLT (if ever downloaded via specs/download.py):
+   delegates to core's load_schematron_validator() for full Peppol BIS 3.0
+   rule coverage (base + Peppol overlay). Not currently populated — see the
+   [GAP id=core.schematron.be_bundled_xslt] note below; this slot stays wired
+   for if/when the overlay's licensing question resolves.
+2. Core-provided EN 16931 base Schematron (always available — bundled in
+   mcp-einvoicing-core >= 1.18.0): delegates to core's
+   en16931_base_schematron_validator(). Checks the ~50 CEN EN16931 BR-* rules
+   (structural + arithmetic/totals), but NOT the Peppol-specific overlay
+   (profile/process ID registration, EndpointID scheme, narrowed code lists).
+   Results carry metadata.scope="en16931-base-only" and an explicit warning —
+   never presented as full Peppol BIS3 conformance. See
+   context-library/decisions/peppol-schematron-artifact.md for why the
+   overlay itself cannot ship yet.
+3. Neither loaded (e.g. the [xslt2] extra is not installed): returns an
+   explicit "unavailable" result (valid=False, an error explaining why)
+   rather than a silent pass. v0.7.0 removed the package's own hand-rolled
+   Peppol BIS 3.0 base-rule approximation (PEPPOL_BIS3_RULES) — it covered
+   ~10 of the ~50+ real CEN/Peppol rules, no arithmetic checks, and had
+   carried a rule-ID mislabeling bug (fixed in v0.6.0) before removal. Do not
+   reintroduce a package-local hand-rolled subset — see
+   context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1] and
+   [CORE-EN16931-BASE-SCHEMATRON-1].
+4. XPath overlay: evaluates hand-coded rules for the mercurius profile only
    (MERCURIUS_RULES — Mercurius-specific checks, not a Peppol/EN16931 base
    ruleset; see standards/mercurius.py).
-3. peppol-bis-3/pint-eu with no Schematron loaded: returns an explicit
-   "unavailable" result (valid=False, an error explaining why) rather than a
-   partial pass/fail. v0.7.0 removed the package's own hand-rolled Peppol
-   BIS 3.0 base-rule approximation (PEPPOL_BIS3_RULES) — it covered ~10 of the
-   ~50+ real CEN/Peppol rules, no arithmetic checks, and had carried a rule-ID
-   mislabeling bug (fixed in v0.6.0) before removal. A package-local partial
-   approximation of rules that are identical across every Peppol-BIS3-consuming
-   country is exactly the kind of drift context-library/roadmap-2026.md
-   [CORE-PEPPOL-SCHEMATRON-1] exists to close — see that entry before adding
-   a replacement fallback here or in any other package.
 
 BE-SC-1 (resolved): _evaluate_rule uses real lxml XPath evaluation.
 
-[GAP id=core.schematron.be_bundled_xslt] (still open): no compiled,
-SVRL-producing Peppol BIS 3.0 Schematron XSLT is bundled or downloadable via
-``specs/download.py``. specs/peppol_bis_3/ currently ships only
-CEN-EN16931-UBL.sch (an uncompiled Schematron *source*, EUPL 1.2 licensed).
-The OpenPeppol 3.0.20 (2025 November) release bundle used to verify this
-package's former rules also contained PEPPOL-EN16931-UBL.sch and a
-stylesheet-ubl.xslt — the latter was verified (2026-08-17) to be a
-UBL-invoice-to-HTML *viewer* stylesheet, not a Schematron/SVRL validator
-(running it against a test invoice returns an HTML document, not SVRL
-findings). Neither file is bundled here: PEPPOL-EN16931-UBL.sch's license is
-unclear ("reproduced with permission from CEN", no redistribution terms
-stated) and stylesheet-ubl.xslt carries no license at all — both are pending
-explicit confirmation before shipping in a published wheel. Turning the .sch
-sources into a working SVRL-producing XSLT also still requires a Trang/Saxon
-Schematron-compilation build step this package does not yet have.
-``_find_schematron_xslt`` excludes any stylesheet-ubl.xslt found under
-specs/peppol_bis_3/ by name as a defensive guard, so it is never mistaken for
-a compiled Schematron if one is added back later.
+[GAP id=core.schematron.be_bundled_xslt] (partially resolved, 2026-08-20 —
+see [CORE-EN16931-BASE-SCHEMATRON-1]): the CEN EN16931 base rules are now
+served from a compiled artifact bundled in mcp-einvoicing-core itself (path 2
+above) — this package no longer needs its own copy of that half. What
+remains genuinely open is the Peppol-specific overlay
+(PEPPOL-EN16931-UBL.sch): its license is unclear ("reproduced with
+permission from CEN", no redistribution terms stated, no repo-level LICENSE
+either — confirmed against the live OpenPEPPOL/peppol-bis-invoice-3 repo) and
+stays unbundled everywhere, per
+context-library/decisions/peppol-schematron-artifact.md. specs/peppol_bis_3/
+here still only ships CEN-EN16931-UBL.sch as a reference/verification copy
+(now redundant with core's own compiled version, but left in place — no
+functional harm). ``_find_schematron_xslt`` continues to exclude any
+stylesheet-ubl.xslt found under specs/peppol_bis_3/ by name as a defensive
+guard (verified 2026-08-17 to be a UBL-invoice-to-HTML viewer, not a
+Schematron/SVRL validator), so it is never mistaken for a compiled Schematron
+if a genuine one is added back later.
 """
 
 from __future__ import annotations
@@ -76,17 +86,29 @@ _PROFILE_RULES: dict[str, list[dict[str, str]]] = {
     "mercurius": MERCURIUS_RULES,
 }
 
-# Emitted for peppol-bis-3/pint-eu when no compiled Schematron is loaded.
+# Emitted for peppol-bis-3/pint-eu when neither the local full Schematron nor
+# core's bundled EN16931-base Schematron could be loaded (e.g. the [xslt2]
+# extra is missing) — should be rare now that the base validator ships in
+# core itself.
 _PEPPOL_VALIDATION_UNAVAILABLE = (
-    "PEPPOL-VALIDATION-UNAVAILABLE: no compiled Peppol BIS 3.0 Schematron "
-    "validator is available in this environment. This package no longer "
-    "carries a hand-rolled approximation (removed in v0.7.0 after a rule-ID "
-    "mislabeling bug — see CHANGELOG.md). See "
+    "PEPPOL-VALIDATION-UNAVAILABLE: no Schematron validator could be loaded "
+    "in this environment (neither the local full Peppol BIS 3.0 Schematron "
+    "nor core's bundled EN16931-base Schematron). Install "
+    "mcp-einvoicing-core[xslt2] to enable validation. See "
     "[GAP id=core.schematron.be_bundled_xslt] and "
-    "context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]. Install "
-    "mcp-einvoicing-core[xslt2] and provide a properly licensed, compiled "
-    "SVRL-producing Schematron XSLT under specs/peppol_bis_3/ to enable "
-    "real validation."
+    "context-library/roadmap-2026.md [CORE-EN16931-BASE-SCHEMATRON-1]."
+)
+
+# Added to every peppol-bis-3/pint-eu result served by core's bundled EN16931
+# base Schematron (path 2 in the module docstring): it checks the CEN base
+# rules only, not the Peppol-specific overlay. A document can pass this and
+# still be rejected by a real Peppol Access Point.
+_EN16931_BASE_ONLY_SCOPE_WARNING = (
+    "EN16931-BASE-ONLY-SCOPE: this validates the CEN EN16931 base rules "
+    "(structural + arithmetic/totals) only. Peppol-specific overlay rules "
+    "(profile/process ID registration, EndpointID scheme, narrowed code "
+    "lists) are NOT checked — this is not a full Peppol BIS3 conformance "
+    "result. See context-library/decisions/peppol-schematron-artifact.md."
 )
 
 # Added to every mercurius-profile result: MERCURIUS_RULES only covers the
@@ -168,6 +190,26 @@ class BEDocumentValidator(BaseDocumentValidator):
             except Exception as exc:
                 _log.warning("Failed to load Schematron XSLT %s: %s", xslt_path, exc)
 
+        # Core's bundled EN16931-base Schematron (base rules only, no Peppol
+        # overlay — see module docstring). Used when the local full-overlay
+        # slot above is empty, which is the case for every install today.
+        self._base_schematron = None
+        try:
+            from mcp_einvoicing_core.schematron_artifacts import (  # noqa: PLC0415
+                en16931_base_schematron_validator,
+            )
+
+            self._base_schematron = en16931_base_schematron_validator()
+            _log.info("Loaded core's bundled EN16931-base Schematron.")
+        except ImportError as exc:
+            _log.warning(
+                "Core's bundled EN16931-base Schematron requires XSLT 2.0/3.0 "
+                "(Saxon-HE); install mcp-einvoicing-core[xslt2] to enable it. %s",
+                exc,
+            )
+        except Exception as exc:
+            _log.warning("Failed to load core's bundled EN16931-base Schematron: %s", exc)
+
     def get_schema_version(self) -> str:
         return "Peppol BIS 3.0 / EN16931"
 
@@ -188,15 +230,33 @@ class BEDocumentValidator(BaseDocumentValidator):
         - any other profile: explicit error, no silent default.
         """
         if profile in ("peppol-bis-3", "pint-eu"):
+            xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
+
             if self._schematron:
-                xml_bytes = xml.encode("utf-8") if isinstance(xml, str) else xml
                 result = self._schematron.validate(xml_bytes, profile=profile)
                 return DocumentValidationResult(
                     valid=result.is_valid,
                     errors=[f"{m.rule_id}: {m.text}" for m in result.errors],
                     warnings=[f"{m.rule_id}: {m.text}" for m in result.warnings],
-                    metadata={"profile": profile, "engine": "schematron-xslt"},
+                    metadata={"profile": profile, "engine": "schematron-xslt", "scope": "full"},
                 )
+
+            if self._base_schematron:
+                result = self._base_schematron.validate(xml_bytes, profile=profile)
+                return DocumentValidationResult(
+                    valid=result.is_valid,
+                    errors=[f"{m.rule_id}: {m.text}" for m in result.errors],
+                    warnings=[
+                        _EN16931_BASE_ONLY_SCOPE_WARNING,
+                        *[f"{m.rule_id}: {m.text}" for m in result.warnings],
+                    ],
+                    metadata={
+                        "profile": profile,
+                        "engine": "schematron-xslt",
+                        "scope": "en16931-base-only",
+                    },
+                )
+
             return DocumentValidationResult(
                 valid=False,
                 errors=[_PEPPOL_VALIDATION_UNAVAILABLE],
@@ -251,8 +311,17 @@ class BEDocumentValidator(BaseDocumentValidator):
     ) -> dict[str, object]:
         """Validate a UBL 2.1 XML invoice against Belgian business rules.
 
-        Applies EN 16931 syntax and semantic checks plus the selected Belgian
-        profile overlay (Peppol BIS Billing 3.0, EU PINT v1.0.1, or Mercurius).
+        For 'peppol-bis-3'/'pint-eu': checks the CEN EN16931 base rules
+        (structural + arithmetic/totals, ~50 BR-* rules) via a compiled
+        Schematron. Does NOT check the Peppol-specific overlay (profile ID
+        registration, EndpointID scheme, narrowed code lists) — the result's
+        metadata.scope is "en16931-base-only", and a warning is included. This
+        is not a full Peppol BIS3 conformance check; a document that passes
+        may still be rejected by a real Peppol Access Point. See
+        context-library/decisions/peppol-schematron-artifact.md for why.
+        For 'mercurius': applies the Mercurius-specific overlay rules only
+        (endpoint scheme, PO reference) — also not full EN16931/Peppol base
+        compliance.
         Returns a structured result with per-rule error and warning messages.
         """
         try:

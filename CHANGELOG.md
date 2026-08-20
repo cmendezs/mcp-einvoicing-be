@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.8.0] — 2026-08-20
+
+### Changed
+- `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0` (**[CORE-EN16931-BASE-SCHEMATRON-1]**). This checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only XPath fallback this package carried before v0.7.0 — but explicitly does **not** check the Peppol-specific overlay rules (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result now carries an explicit warning that this is not a full Peppol BIS3 conformance check. See `context-library/decisions/peppol-schematron-artifact.md` for why the overlay itself still cannot ship (no confirmed OpenPeppol redistribution rights).
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.18.0` (was `>=1.15.0`) for the new `schematron_artifacts` module.
+
+### Unchanged
+- The local full-Peppol-overlay Schematron path (`specs/peppol_bis_3/`, `_find_schematron_xslt`) stays wired exactly as before — if a properly-licensed compiled overlay stylesheet is ever added there, it still takes priority over the new base-only path. No such file exists today.
+
+---
+
 ## [0.7.0] — 2026-08-17
 
 ### Removed

@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-07-15T13:32:35.696454+00:00",
+  "generated_at": "2026-08-20T08:42:35.881299+00:00",
   "pkg_name": "mcp-einvoicing-be",
-  "pkg_version": "0.5.0",
-  "core_version": "1.15.0",
+  "pkg_version": "0.8.0",
+  "core_version": "1.18.1",
   "core_version_compatible": true,
-  "exit_code": 0,
+  "exit_code": 1,
   "total_blocking": 0,
-  "total_warnings": 0,
+  "total_warnings": 1,
   "checks": [
     {
       "check_id": "CHECK_1",
@@ -15,7 +15,7 @@
       "skipped": false,
       "skip_reason": "",
       "blocking_count": 0,
-      "warning_count": 0,
+      "warning_count": 1,
       "findings": [
         {
           "check_id": "CHECK_1",
@@ -246,6 +246,13 @@
           "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.digital_signature.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.digital_signature.load_certificate_der",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
@@ -525,6 +532,13 @@
           "check_id": "CHECK_1",
           "tag": "[OVERRIDE]",
           "severity": "OK",
+          "symbol": "mcp_einvoicing_core.http_client.JWSConfig",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.http_client.OAuthConfig",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
@@ -555,6 +569,13 @@
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.http_client.TokenCache",
           "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[MISSING]",
+          "severity": "WARNING",
+          "symbol": "mcp_einvoicing_core.http_client.compute_retry_delay",
+          "message": "Core symbol 'compute_retry_delay' is neither imported by mcp-einvoicing-be nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
         },
         {
           "check_id": "CHECK_1",
@@ -1161,7 +1182,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "mcp-einvoicing-core",
-          "message": "Installed: 1.15.0 | Declared range: >=1.15.0,<2.0.0 | Compatible: True"
+          "message": "Installed: 1.18.1 | Declared range: >=1.18.0,<2.0.0 | Compatible: True"
         }
       ]
     },

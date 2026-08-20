@@ -41,6 +41,14 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.8.0] - 2026-08-20
+#### Changed
+- **[CORE-EN16931-BASE-SCHEMATRON-1]** `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0`. Checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only fallback this package carried before v0.7.0 — but explicitly does not check the Peppol-specific overlay (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result carries an explicit warning that this is not a full Peppol BIS3 conformance check. See `context-library/decisions/peppol-schematron-artifact.md`.
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.18.0` (was `>=1.15.0`) for the new `schematron_artifacts` module. Picks up the core v1.18.1 fix for the missing top-level `DueDate` in the UBL serializer/parser.
+
+#### Unchanged
+- The local full-Peppol-overlay Schematron path (`specs/peppol_bis_3/`, `_find_schematron_xslt`) stays wired exactly as before — if a properly-licensed compiled overlay stylesheet is ever added there, it still takes priority over the new base-only path. No such file exists today.
+
 ### [0.7.0] - 2026-08-17
 #### Removed
 - **[BE-SC-11 follow-up]** `PEPPOL_BIS3_RULES` (hand-rolled Peppol BIS 3.0 base-rule approximation, ~10 of ~50+ real rules, no arithmetic checks) removed entirely rather than kept as the "fixed" version from v0.6.0 — a package-local partial duplication of rules identical across every Peppol-BIS3 country is a recurring bug source. See `context-library/roadmap-2026.md` **[CORE-PEPPOL-SCHEMATRON-1]**.

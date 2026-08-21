@@ -81,6 +81,7 @@ Pour une installation de développement locale :
 | `BCE_API_KEY` | Clé API pour la base de données d'entreprises belge BCE/KBO | - |
 | `PEPPOL_ENV` | Environnement Peppol : `production` ou `test` | `production` |
 | `PEPPOL_SML_URL` | Remplacer l'URL de recherche SML | (auto) |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes eDEC OpenPeppol, requis par les outils de listes de codes (non fourni avec ce paquet ; voir le README de `mcp-einvoicing-core`) | — |
 | `LOG_LEVEL` | Niveau de journalisation : `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 ---
@@ -149,15 +150,20 @@ Retourne le nom de l'entreprise, l'adresse enregistrée, le statut juridique et 
 
 ---
 
-### `check_peppol_participant_be`
+### Outils du réseau Peppol
 
-Vérifie si une entreprise belge est enregistrée en tant que participant Peppol en interrogeant le réseau SMP/SML.
+La recherche de participant Peppol, la recherche de point de service, un diagnostic DNS seul, l'envoi AS4 et les outils de listes de codes eDEC OpenPeppol sont fournis par le plugin d'outils Peppol partagé du core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), monté dans `server.py` avec un adaptateur d'identifiant spécifique à la Belgique : un numéro de TVA belge simple (par ex. `0428759497` ou `BE0428759497`) est normalisé vers le schéma Peppol `0208:<chiffres>` (numéro d'entreprise KBO/BCE) ; un identifiant déjà qualifié par schéma (par ex. `0208:0428759497`) passe inchangé.
 
-| Paramètre | Type | Requis | Description |
-|---|---|---|---|
-| `identifier` | `string` | oui | Identifiant de participant Peppol (par ex. `0088:BE0428759497`) ou numéro de TVA belge simple |
+| Outil | Description |
+|---|---|
+| `peppol_lookup_participant` | Vérifie si une entreprise est enregistrée sur le réseau Peppol ; retourne le statut d'enregistrement et les types de documents pris en charge |
+| `peppol_get_service_endpoint` | Récupère le point de terminaison AS4 pour le type de document d'un participant |
+| `resolve_peppol_dns` | Diagnostic DNS seul (SML), indépendant de l'accessibilité SMP |
+| `peppol_send` | Transmet une facture UBL/CII via AS4 |
+| `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | Recherches dans les listes de codes eDEC OpenPeppol (nécessitent `EINVOICING_PEPPOL_CODELIST_DIR`) |
+| `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | Vérifications de listes de codes eDEC OpenPeppol et rapport de version |
 
-Retourne le statut d'enregistrement, les identifiants de type de document pris en charge et l'URL du point d'accès SMP.
+Voir le [README de `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) pour la documentation complète des paramètres de ces outils.
 
 ---
 
@@ -201,7 +207,7 @@ mcp-einvoicing-be/
 │       │   ├── generation.py      # generate_invoice_be
 │       │   ├── transformation.py  # transform_to_ubl
 │       │   ├── parsing.py         # parse_ubl_invoice_be
-│       │   └── lookup.py          # lookup_vat_be, check_peppol_participant_be, get_invoice_types_be
+│       │   └── lookup.py          # lookup_vat_be, get_invoice_types_be
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── invoice.py         # InvoiceInput, InvoiceLine, ValidationResult

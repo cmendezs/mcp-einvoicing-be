@@ -41,6 +41,11 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.9.0] - 2026-08-21
+#### Changed
+- **[ARCH-CONVERGE-BE]** `check_peppol_participant_be` removed. Peppol participant lookup, plus service-endpoint lookup, DNS-only diagnostic, AS4 send, and 8 eDEC codelist tools now come from the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a BE-specific identifier adapter that normalizes a bare Belgian VAT number to the `0208:<digits>` Peppol scheme. Use `peppol_lookup_participant` instead of the removed tool.
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.19.0` (was `>=1.18.0`), required for `register_peppol_tools`.
+
 ### [0.8.0] - 2026-08-20
 #### Changed
 - **[CORE-EN16931-BASE-SCHEMATRON-1]** `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0`. Checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only fallback this package carried before v0.7.0 — but explicitly does not check the Peppol-specific overlay (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result carries an explicit warning that this is not a full Peppol BIS3 conformance check. See `context-library/decisions/peppol-schematron-artifact.md`.

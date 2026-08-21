@@ -163,6 +163,9 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # OVERRIDE-REASON: JWSConfig (core v1.16.0) configures RS256/x5c JWT
         # auth for platforms like ES FACe; BE's Peppol/BCE lookups need no such auth mode
         "JWSConfig",
+        # OVERRIDE-REASON: compute_retry_delay is an internal retry-backoff helper used by
+        # BaseEInvoicingClient's own request loop; BE calls the client, not this helper directly
+        "compute_retry_delay",
         # OVERRIDE-REASON: stdlib/third-party re-exports in http_client; BE imports from source directly
         "Any",
         "BaseModel",
@@ -197,17 +200,24 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     "mcp_einvoicing_core.pdf": {
         # OVERRIDE-REASON: Peppol BIS 3.0 / PINT-BE does not mandate PDF/A-3 embedding; PDFEmbedder is not applicable
         "PDFEmbedder",
+        # OVERRIDE-REASON: stdlib re-export in pdf module; not used directly by BE
+        "Union",
     },
     "mcp_einvoicing_core.peppol": {
-        # OVERRIDE-REASON: BE-LC-1 resolved; PeppolSMPClient and PeppolParticipantId are now imported and used in tools/lookup.py
-        # OVERRIDE-REASON: PeppolLookupResult is returned by lookup_participant() and accessed via .to_dict(); not directly imported
+        # OVERRIDE-REASON: ARCH-CONVERGE-BE resolved; Peppol participant lookup now goes
+        # through the shared core plugin (mcp_einvoicing_core.peppol.tools.register_peppol_tools,
+        # mounted in server.py), which imports PeppolSMPClient/PeppolParticipantId itself.
+        # BE no longer imports Peppol client primitives directly.
+        "PeppolSMPClient",
+        "PeppolParticipantId",
         "PeppolLookupResult",
-        # OVERRIDE-REASON: PeppolServiceInfo — get_service_endpoint not called; only lookup_participant is used
         "PeppolServiceInfo",
-        # OVERRIDE-REASON: PEPPOL_BIS_BILLING_30 document type constant; not passed as filter in the lookup tool
         "PEPPOL_BIS_BILLING_30",
-        # OVERRIDE-REASON: BE uses PeppolSMPClient default production environment; PeppolEnvironment enum not imported directly
         "PeppolEnvironment",
+        # OVERRIDE-REASON: resolve_naptr (core v1.19.0) is a standalone DNS diagnostic;
+        # BE's mounted core plugin exposes it as the resolve_peppol_dns tool, BE package
+        # code itself has no direct call site
+        "resolve_naptr",
         # OVERRIDE-REASON: stdlib/third-party re-exports in peppol; BE imports from source directly
         "Enum",
         "dataclass",
@@ -312,10 +322,15 @@ _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
     "generate_invoice_be": "Generate a UBL 2.1 invoice document",
     "transform_to_ubl": "Transform invoice data to UBL 2.1 XML",
     "lookup_vat_be": "Look up Belgian company via BCE/KBO",
-    "check_peppol_participant_be": "Check Peppol participant registration (BE)",
     "get_invoice_types_be": "List supported invoice types and profiles",
     "parse_ubl_invoice_be": "Parse a UBL 2.1 XML invoice into a structured dict",
 }
+
+# Peppol participant lookup/send/DNS/codelist tools are registered via the
+# shared core plugin (mcp_einvoicing_core.peppol.tools.register_peppol_tools,
+# mounted in server.py under the "peppol" plugin name), not a BE-local
+# function, so they are intentionally absent from _REQUIRED_TOOL_CATEGORIES.
+# See ARCH-CONVERGE-BE in roadmap-2026.md.
 
 
 def _collect_registered_tools() -> set[str]:
@@ -325,7 +340,6 @@ def _collect_registered_tools() -> set[str]:
     standalone: list[tuple[str, str]] = [
         ("mcp_einvoicing_be.tools.transformation", "transform_to_ubl"),
         ("mcp_einvoicing_be.tools.lookup", "lookup_vat_be"),
-        ("mcp_einvoicing_be.tools.lookup", "check_peppol_participant_be"),
         ("mcp_einvoicing_be.tools.lookup", "get_invoice_types_be"),
         ("mcp_einvoicing_be.tools.parsing", "parse_ubl_invoice_be"),
     ]

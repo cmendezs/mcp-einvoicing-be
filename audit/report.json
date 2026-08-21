@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-20T08:42:35.881299+00:00",
+  "generated_at": "2026-08-21T15:04:02.389162+00:00",
   "pkg_name": "mcp-einvoicing-be",
-  "pkg_version": "0.8.0",
-  "core_version": "1.18.1",
+  "pkg_version": "0.9.0",
+  "core_version": "1.19.0",
   "core_version_compatible": true,
-  "exit_code": 1,
+  "exit_code": 0,
   "total_blocking": 0,
-  "total_warnings": 1,
+  "total_warnings": 0,
   "checks": [
     {
       "check_id": "CHECK_1",
@@ -15,7 +15,7 @@
       "skipped": false,
       "skip_reason": "",
       "blocking_count": 0,
-      "warning_count": 1,
+      "warning_count": 0,
       "findings": [
         {
           "check_id": "CHECK_1",
@@ -572,10 +572,10 @@
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[MISSING]",
-          "severity": "WARNING",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.http_client.compute_retry_delay",
-          "message": "Core symbol 'compute_retry_delay' is neither imported by mcp-einvoicing-be nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
@@ -707,6 +707,13 @@
           "check_id": "CHECK_1",
           "tag": "[OVERRIDE]",
           "severity": "OK",
+          "symbol": "mcp_einvoicing_core.pdf.Union",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
           "symbol": "mcp_einvoicing_core.peppol.Enum",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
@@ -726,17 +733,17 @@
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.peppol.PeppolParticipantId",
-          "message": "Imported and used."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
-          "tag": "[OK]",
+          "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.peppol.PeppolSMPClient",
-          "message": "Imported and used."
+          "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
           "check_id": "CHECK_1",
@@ -764,6 +771,13 @@
           "tag": "[OVERRIDE]",
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.peppol.field",
+          "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[OVERRIDE]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_core.peppol.resolve_naptr",
           "message": "Intentionally overridden by mcp-einvoicing-be."
         },
         {
@@ -1082,13 +1096,6 @@
           "check_id": "CHECK_2",
           "tag": "[OK]",
           "severity": "OK",
-          "symbol": "check_peppol_participant_be",
-          "message": "Tool 'check_peppol_participant_be' is registered. (Check Peppol participant registration (BE))"
-        },
-        {
-          "check_id": "CHECK_2",
-          "tag": "[OK]",
-          "severity": "OK",
           "symbol": "get_invoice_types_be",
           "message": "Tool 'get_invoice_types_be' is registered. (List supported invoice types and profiles)"
         },
@@ -1182,7 +1189,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "mcp-einvoicing-core",
-          "message": "Installed: 1.18.1 | Declared range: >=1.18.0,<2.0.0 | Compatible: True"
+          "message": "Installed: 1.19.0 | Declared range: >=1.19.0,<2.0.0 | Compatible: True"
         }
       ]
     },

@@ -217,24 +217,11 @@ class TestBceApiKeyWarning:
 
 # ---------------------------------------------------------------------------
 # BE-LC-3 — structured error for Peppol lookup failures
+#
+# ARCH-CONVERGE-BE: Peppol participant lookup moved to the shared core Peppol
+# tool plugin (peppol_lookup_participant). Structured-error behavior is
+# covered by mcp-einvoicing-core's own test suite (test_peppol_tools.py).
 # ---------------------------------------------------------------------------
-
-
-class TestPeppolStructuredError:
-    @pytest.mark.asyncio
-    async def test_connection_error_returns_structured_dict(self, monkeypatch):
-        from mcp_einvoicing_be.tools.lookup import check_peppol_participant_be
-
-        async def _raise(*args, **kwargs):
-            raise ConnectionError("DNS resolution failed")
-
-        from mcp_einvoicing_core.peppol import PeppolSMPClient
-
-        monkeypatch.setattr(PeppolSMPClient, "lookup_participant", _raise)
-
-        result = await check_peppol_participant_be(identifier="0208:0428759497")
-        assert result["registered"] is False
-        assert "ConnectionError" in result["error"]
 
 
 # ---------------------------------------------------------------------------

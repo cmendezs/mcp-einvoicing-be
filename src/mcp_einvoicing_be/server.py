@@ -3,19 +3,28 @@
 from typing import Any
 
 from mcp_einvoicing_core import EInvoicingMCPServer
+from mcp_einvoicing_core.peppol.tools import register_peppol_tools
 
 from mcp_einvoicing_be.tools.generation import BEDocumentGenerator
-from mcp_einvoicing_be.tools.lookup import (
-    check_peppol_participant_be,
-    get_invoice_types_be,
-    lookup_vat_be,
-)
+from mcp_einvoicing_be.tools.lookup import get_invoice_types_be, lookup_vat_be
 from mcp_einvoicing_be.tools.parsing import parse_ubl_invoice_be
 from mcp_einvoicing_be.tools.transformation import transform_to_ubl
 from mcp_einvoicing_be.tools.validation import BEDocumentValidator
+from mcp_einvoicing_be.utils.helpers import normalize_vat_be
 
 _generator = BEDocumentGenerator()
 _validator = BEDocumentValidator()
+
+
+def _be_id_adapter(identifier: str) -> str:
+    """Normalize a bare Belgian VAT number to a Peppol participant ID.
+
+    Scheme 0208 is the Belgian enterprise number (KBO/BCE). Already
+    scheme-qualified identifiers (containing ':') pass through unchanged.
+    """
+    if ":" in identifier:
+        return identifier
+    return f"0208:{normalize_vat_be(identifier)[2:]}"
 
 
 def _register_be_tools(mcp: Any) -> None:
@@ -25,7 +34,6 @@ def _register_be_tools(mcp: Any) -> None:
     mcp.tool()(transform_to_ubl)
     mcp.tool()(parse_ubl_invoice_be)
     mcp.tool()(lookup_vat_be)
-    mcp.tool()(check_peppol_participant_be)
     mcp.tool()(get_invoice_types_be)
 
 
@@ -39,6 +47,7 @@ mcp = EInvoicingMCPServer(
     ),
 )
 mcp.register_plugin(_register_be_tools, "be")
+mcp.register_plugin(lambda m: register_peppol_tools(m, id_adapter=_be_id_adapter), "peppol")
 
 
 def main() -> None:

@@ -81,6 +81,7 @@ Voor een lokale ontwikkelingsinstallatie:
 | `BCE_API_KEY` | API-sleutel voor de Belgische BCE/KBO-ondernemingsdatabank | — |
 | `PEPPOL_ENV` | Peppol-omgeving: `production` of `test` | `production` |
 | `PEPPOL_SML_URL` | Overschrijf de SML-opzoek-URL | (auto) |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Lokale map met uw eigen kopie van de OpenPeppol eDEC-codelijsten, vereist door de codelijsttools (niet meegeleverd met dit pakket; zie de README van `mcp-einvoicing-core`) | — |
 | `LOG_LEVEL` | Logboekniveau: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
 
 ---
@@ -149,15 +150,20 @@ Retourneert de ondernemingsnaam, het geregistreerde adres, de juridische status 
 
 ---
 
-### `check_peppol_participant_be`
+### Peppol-netwerktools
 
-Controleert of een Belgisch bedrijf geregistreerd is als Peppol-deelnemer door het SMP/SML-netwerk te bevragen.
+Peppol-deelnemersopzoeking, service-endpointopzoeking, een alleen-DNS-diagnose, AS4-verzending en de OpenPeppol eDEC-codelijsttools worden geleverd door de gedeelde Peppol-tool-plugin van de core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), gemonteerd in `server.py` met een Belgiëspecifieke identifier-adapter: een gewoon Belgisch btw-nummer (bijv. `0428759497` of `BE0428759497`) wordt genormaliseerd naar het Peppol-schema `0208:<cijfers>` (KBO/BCE-ondernemingsnummer); een reeds schema-gekwalificeerde identifier (bijv. `0208:0428759497`) blijft ongewijzigd.
 
-| Parameter | Type | Vereist | Beschrijving |
-|---|---|---|---|
-| `identifier` | `string` | ja | Peppol-deelnemer-ID (bijv. `0088:BE0428759497`) of gewoon Belgisch btw-nummer |
+| Tool | Beschrijving |
+|---|---|
+| `peppol_lookup_participant` | Controleert of een bedrijf geregistreerd is op het Peppol-netwerk; retourneert registratiestatus en ondersteunde documenttypes |
+| `peppol_get_service_endpoint` | Haalt het AS4-endpoint op voor het documenttype van een deelnemer |
+| `resolve_peppol_dns` | Alleen-DNS-diagnose (SML), onafhankelijk van SMP-bereikbaarheid |
+| `peppol_send` | Verzendt een UBL/CII-factuur via AS4 |
+| `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | OpenPeppol eDEC-codelijstopzoekingen (vereisen `EINVOICING_PEPPOL_CODELIST_DIR`) |
+| `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | OpenPeppol eDEC-codelijstcontroles en versierapportage |
 
-Retourneert de registratiestatus, ondersteunde documenttype-identificatoren en de URL van het SMP-toegangspunt.
+Zie de [README van `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) voor volledige parameterdocumentatie van deze tools.
 
 ---
 
@@ -201,7 +207,7 @@ mcp-einvoicing-be/
 │       │   ├── generation.py      # generate_invoice_be
 │       │   ├── transformation.py  # transform_to_ubl
 │       │   ├── parsing.py         # parse_ubl_invoice_be
-│       │   └── lookup.py          # lookup_vat_be, check_peppol_participant_be, get_invoice_types_be
+│       │   └── lookup.py          # lookup_vat_be, get_invoice_types_be
 │       ├── models/
 │       │   ├── __init__.py
 │       │   ├── invoice.py         # InvoiceInput, InvoiceLine, ValidationResult

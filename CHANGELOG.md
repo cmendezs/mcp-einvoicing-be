@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.9.0] - 2026-08-21
+
+### Changed
+- `check_peppol_participant_be` removed. Peppol participant lookup (and the rest of the Peppol network surface: service-endpoint lookup, DNS-only diagnostic, AS4 send, and the eDEC codelist tools) now comes from the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a BE-specific identifier adapter (`_be_id_adapter`) that normalizes a bare Belgian VAT number to the `0208:<digits>` Peppol scheme (KBO/BCE). Use `peppol_lookup_participant` instead of the removed tool; behavior and response shape are unchanged for that use case, but the tool now also exposes `peppol_get_service_endpoint`, `resolve_peppol_dns`, `peppol_send`, and 8 eDEC codelist tools that were not previously available in this package. See `context-library/roadmap-2026.md` **[ARCH-CONVERGE-BE]**.
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.19.0` (was `>=1.18.0`), required for `register_peppol_tools`.
+
+---
+
 ## [0.8.0] — 2026-08-20
 
 ### Changed

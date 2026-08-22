@@ -1,6 +1,7 @@
 # Contributing to mcp-einvoicing-be
 
-Thank you for your interest in contributing. This document explains the workflow and expectations.
+Thank you for your interest in contributing. This document explains the workflow
+and expectations.
 
 ## Development setup
 
@@ -37,6 +38,22 @@ uv run ruff check --fix src tests
 uv run ruff format src tests
 ```
 
+## Tool reference
+
+The tool reference in `docs/TOOLS.md` is generated from the running MCP server.
+If you add, remove, or change a tool or its parameters, regenerate it:
+
+```bash
+uv run python scripts/gen_tool_reference.py
+```
+
+The publish workflow regenerates it at release time, and `--check` mode reports
+drift without writing:
+
+```bash
+uv run python scripts/gen_tool_reference.py --check
+```
+
 ## Pull request checklist
 
 - [ ] All tests pass (`pytest`)
@@ -44,6 +61,7 @@ uv run ruff format src tests
 - [ ] No type errors (`mypy src`)
 - [ ] New or changed behaviour is covered by tests
 - [ ] Validation fixes reference the relevant rule ID (e.g. `PINT-BE-R001`)
+- [ ] `docs/TOOLS.md` regenerated if any tool or parameter changed
 - [ ] `CHANGELOG.md` updated under `[Unreleased]`
 
 ## Commit style
@@ -51,10 +69,10 @@ uv run ruff format src tests
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat: add validate_pint_be tool
-fix: normalize BE VAT numbers with leading zeros
-docs: update README with Mercurius configuration
-test: add fixture for PINT-BE credit note
+feat: add a new validation tool
+fix: normalize party identifiers with leading zeros
+docs: update README with configuration details
+test: add fixture for a credit note
 ```
 
 ## Reporting issues
@@ -64,4 +82,7 @@ Please open an issue at https://github.com/cmendezs/mcp-einvoicing-be/issues and
 - The tool name and input you used
 - The expected result
 - The actual result (full error message or unexpected output)
-- The Belgian e-invoicing standard or rule ID involved, if known
+- The national e-invoicing standard or rule ID involved, if known
+
+Security issues follow a different path: see [SECURITY.md](SECURITY.md) and
+report privately rather than in a public issue.

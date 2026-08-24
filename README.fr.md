@@ -82,7 +82,10 @@ Pour une installation de développement locale :
 | `PEPPOL_ENV` | Environnement Peppol : `production` ou `test` | `production` |
 | `PEPPOL_SML_URL` | Remplacer l'URL de recherche SML | (auto) |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes eDEC OpenPeppol, requis par les outils de listes de codes (non fourni avec ce paquet ; voir le README de `mcp-einvoicing-core`) | — |
+| `EINVOICING_EN16931_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes sémantiques EN 16931 du CEF « Digital Building Blocks », requis par les outils de listes de codes EN 16931 (non fourni ; voir le README de `mcp-einvoicing-core`) | — |
 | `LOG_LEVEL` | Niveau de journalisation : `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+Les outils de rapport EUSR/TSR et MLS nécessitent en plus l'extra `[xslt2]` (`pip install "mcp-einvoicing-be[xslt2]"`) pour la validation Schematron.
 
 ---
 
@@ -152,7 +155,9 @@ Retourne le nom de l'entreprise, l'adresse enregistrée, le statut juridique et 
 
 ### Outils du réseau Peppol
 
-La recherche de participant Peppol, la recherche de point de service, un diagnostic DNS seul, l'envoi AS4 et les outils de listes de codes eDEC OpenPeppol sont fournis par le plugin d'outils Peppol partagé du core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), monté dans `server.py` avec un adaptateur d'identifiant spécifique à la Belgique : un numéro de TVA belge simple (par ex. `0428759497` ou `BE0428759497`) est normalisé vers le schéma Peppol `0208:<chiffres>` (numéro d'entreprise KBO/BCE) ; un identifiant déjà qualifié par schéma (par ex. `0208:0428759497`) passe inchangé.
+La recherche de participant Peppol, la recherche de point de service, un diagnostic DNS seul, l'envoi AS4, la recherche dans l'annuaire Peppol et les outils de listes de codes eDEC OpenPeppol sont fournis par le plugin d'outils Peppol partagé du core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), monté dans `server.py` avec un adaptateur d'identifiant spécifique à la Belgique : un numéro de TVA belge simple (par ex. `0428759497` ou `BE0428759497`) est normalisé vers le schéma Peppol `0208:<chiffres>` (numéro d'entreprise KBO/BCE) ; un identifiant déjà qualifié par schéma (par ex. `0208:0428759497`) passe inchangé.
+
+`peppol_send` signe désormais les messages sortants avec une véritable signature `wsse:Security` depuis `mcp-einvoicing-core` v1.20.0 (auparavant calculée puis ignorée — voir CHANGELOG.md v0.10.0).
 
 | Outil | Description |
 |---|---|
@@ -160,8 +165,25 @@ La recherche de participant Peppol, la recherche de point de service, un diagnos
 | `peppol_get_service_endpoint` | Récupère le point de terminaison AS4 pour le type de document d'un participant |
 | `resolve_peppol_dns` | Diagnostic DNS seul (SML), indépendant de l'accessibilité SMP |
 | `peppol_send` | Transmet une facture UBL/CII via AS4 |
+| `peppol_directory_search` | Recherche dans l'annuaire public Peppol par participant, nom, pays ou type de document |
 | `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | Recherches dans les listes de codes eDEC OpenPeppol (nécessitent `EINVOICING_PEPPOL_CODELIST_DIR`) |
 | `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | Vérifications de listes de codes eDEC OpenPeppol et rapport de version |
+
+Voir le [README de `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) pour la documentation complète des paramètres de ces outils.
+
+---
+
+### Outils de rapport et de statut Peppol
+
+Ajoutés en v0.10.0 via trois plugins core optionnels, montés inconditionnellement dans `server.py`. Chacun renvoie une erreur claire à l'appel (pas à l'enregistrement) si son extra ou son répertoire de données est manquant.
+
+| Outil | Plugin | Description |
+|---|---|---|
+| `validate_eusr_report` | `register_peppol_reporting_tools` | Valide un End User Statistics Report (XSD, puis Schematron). Nécessite l'extra `[xslt2]`. |
+| `validate_tsr_report` | `register_peppol_reporting_tools` | Valide un Transaction Statistics Report (XSD, puis Schematron). Nécessite l'extra `[xslt2]`. |
+| `validate_mls_message` | `register_peppol_mls_tools` | Valide un document Message Level Status (sous-ensemble UBL `ApplicationResponse-2`). Nécessite l'extra `[xslt2]`. |
+| `build_mls_message` | `register_peppol_mls_tools` | Construit une réponse MLS au niveau du document. Nécessite l'extra `[xslt2]`. |
+| 13 paires `list_*`/`check_*`, `get_en16931_codelist_version` | `register_en16931_codelist_tools` | Recherches/vérifications des listes de codes sémantiques EN 16931 (unités, catégories de TVA, etc.). Nécessitent `EINVOICING_EN16931_CODELIST_DIR`. |
 
 Voir le [README de `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) pour la documentation complète des paramètres de ces outils.
 

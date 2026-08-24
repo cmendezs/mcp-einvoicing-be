@@ -82,7 +82,10 @@ Voor een lokale ontwikkelingsinstallatie:
 | `PEPPOL_ENV` | Peppol-omgeving: `production` of `test` | `production` |
 | `PEPPOL_SML_URL` | Overschrijf de SML-opzoek-URL | (auto) |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Lokale map met uw eigen kopie van de OpenPeppol eDEC-codelijsten, vereist door de codelijsttools (niet meegeleverd met dit pakket; zie de README van `mcp-einvoicing-core`) | — |
+| `EINVOICING_EN16931_CODELIST_DIR` | Lokale map met uw eigen kopie van de CEF "Digital Building Blocks" EN 16931-semantische codelijsten, vereist door de EN 16931-codelijsttools (niet meegeleverd; zie de README van `mcp-einvoicing-core`) | — |
 | `LOG_LEVEL` | Logboekniveau: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+De EUSR/TSR-rapportagetools en MLS-tools vereisen daarnaast de `[xslt2]`-extra (`pip install "mcp-einvoicing-be[xslt2]"`) voor Schematron-validatie.
 
 ---
 
@@ -152,7 +155,9 @@ Retourneert de ondernemingsnaam, het geregistreerde adres, de juridische status 
 
 ### Peppol-netwerktools
 
-Peppol-deelnemersopzoeking, service-endpointopzoeking, een alleen-DNS-diagnose, AS4-verzending en de OpenPeppol eDEC-codelijsttools worden geleverd door de gedeelde Peppol-tool-plugin van de core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), gemonteerd in `server.py` met een Belgiëspecifieke identifier-adapter: een gewoon Belgisch btw-nummer (bijv. `0428759497` of `BE0428759497`) wordt genormaliseerd naar het Peppol-schema `0208:<cijfers>` (KBO/BCE-ondernemingsnummer); een reeds schema-gekwalificeerde identifier (bijv. `0208:0428759497`) blijft ongewijzigd.
+Peppol-deelnemersopzoeking, service-endpointopzoeking, een alleen-DNS-diagnose, AS4-verzending, Peppol Directory-zoeken en de OpenPeppol eDEC-codelijsttools worden geleverd door de gedeelde Peppol-tool-plugin van de core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), gemonteerd in `server.py` met een Belgiëspecifieke identifier-adapter: een gewoon Belgisch btw-nummer (bijv. `0428759497` of `BE0428759497`) wordt genormaliseerd naar het Peppol-schema `0208:<cijfers>` (KBO/BCE-ondernemingsnummer); een reeds schema-gekwalificeerde identifier (bijv. `0208:0428759497`) blijft ongewijzigd.
+
+`peppol_send` ondertekent uitgaande berichten sinds `mcp-einvoicing-core` v1.20.0 met een echte `wsse:Security`-handtekening (voorheen berekend en genegeerd — zie CHANGELOG.md v0.10.0).
 
 | Tool | Beschrijving |
 |---|---|
@@ -160,8 +165,25 @@ Peppol-deelnemersopzoeking, service-endpointopzoeking, een alleen-DNS-diagnose, 
 | `peppol_get_service_endpoint` | Haalt het AS4-endpoint op voor het documenttype van een deelnemer |
 | `resolve_peppol_dns` | Alleen-DNS-diagnose (SML), onafhankelijk van SMP-bereikbaarheid |
 | `peppol_send` | Verzendt een UBL/CII-factuur via AS4 |
+| `peppol_directory_search` | Doorzoekt de publieke Peppol Directory op deelnemer, naam, land of documenttype |
 | `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | OpenPeppol eDEC-codelijstopzoekingen (vereisen `EINVOICING_PEPPOL_CODELIST_DIR`) |
 | `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | OpenPeppol eDEC-codelijstcontroles en versierapportage |
+
+Zie de [README van `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) voor volledige parameterdocumentatie van deze tools.
+
+---
+
+### Peppol-rapportage- en statustools
+
+Toegevoegd in v0.10.0 via drie optionele core-plugins, onvoorwaardelijk gemonteerd in `server.py`. Elke tool geeft een duidelijke fout bij aanroep (niet bij registratie) als de bijbehorende extra of datamap ontbreekt.
+
+| Tool | Plugin | Beschrijving |
+|---|---|---|
+| `validate_eusr_report` | `register_peppol_reporting_tools` | Valideert een End User Statistics Report (XSD, dan Schematron). Vereist de `[xslt2]`-extra. |
+| `validate_tsr_report` | `register_peppol_reporting_tools` | Valideert een Transaction Statistics Report (XSD, dan Schematron). Vereist de `[xslt2]`-extra. |
+| `validate_mls_message` | `register_peppol_mls_tools` | Valideert een Message Level Status-document (UBL `ApplicationResponse-2`-subset). Vereist de `[xslt2]`-extra. |
+| `build_mls_message` | `register_peppol_mls_tools` | Bouwt een MLS-respons op documentniveau. Vereist de `[xslt2]`-extra. |
+| 13 `list_*`/`check_*`-paren, `get_en16931_codelist_version` | `register_en16931_codelist_tools` | Opzoekingen/controles van EN 16931-semantische codelijsten (eenheden, btw-categorieën, enz.). Vereisen `EINVOICING_EN16931_CODELIST_DIR`. |
 
 Zie de [README van `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme) voor volledige parameterdocumentatie van deze tools.
 

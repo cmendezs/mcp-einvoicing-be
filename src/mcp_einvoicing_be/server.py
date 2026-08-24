@@ -3,6 +3,9 @@
 from typing import Any
 
 from mcp_einvoicing_core import EInvoicingMCPServer
+from mcp_einvoicing_core.en16931_codelist_tools import register_en16931_codelist_tools
+from mcp_einvoicing_core.peppol.mls_tools import register_peppol_mls_tools
+from mcp_einvoicing_core.peppol.reporting_tools import register_peppol_reporting_tools
 from mcp_einvoicing_core.peppol.tools import register_peppol_tools
 
 from mcp_einvoicing_be.tools.generation import BEDocumentGenerator
@@ -48,6 +51,9 @@ mcp = EInvoicingMCPServer(
 )
 mcp.register_plugin(_register_be_tools, "be")
 mcp.register_plugin(lambda m: register_peppol_tools(m, id_adapter=_be_id_adapter), "peppol")
+mcp.register_plugin(register_peppol_reporting_tools, "peppol-reporting")
+mcp.register_plugin(register_peppol_mls_tools, "peppol-mls")
+mcp.register_plugin(register_en16931_codelist_tools, "en16931-codelists")
 
 
 def main() -> None:

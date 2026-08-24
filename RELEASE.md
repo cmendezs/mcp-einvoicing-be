@@ -41,6 +41,16 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.10.0] - 2026-08-24
+#### Changed
+- **[core v1.20.0]** `peppol_send` now emits a real `wsse:Security` message signature. Core's AS4 transport client's `_apply_message_signature` previously computed a signature and discarded it, sending unsigned outbound messages. Wire-level behavior change, not independently validated against a live sandbox Peppol AP at time of publish — the signing code is shared core logic, not BE-specific, so no per-package sandbox gate was required (2026-08-24 user decision).
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.20.0` (was `>=1.19.0`).
+- `xslt2` extra now chains `mcp-einvoicing-core[xslt2]>=1.20.0` (was `>=1.19.0`).
+
+#### Added
+- Mounted three new opt-in core plugins in `server.py`, alongside the existing Peppol tool plugin: `register_peppol_reporting_tools` (`validate_eusr_report`, `validate_tsr_report`; requires `[xslt2]`), `register_peppol_mls_tools` (`validate_mls_message`, `build_mls_message`; requires `[xslt2]`), and `register_en16931_codelist_tools` (13 `list_*`/`check_*` pairs; requires `EINVOICING_EN16931_CODELIST_DIR`). `peppol_directory_search` arrives automatically via the existing `register_peppol_tools` mount.
+- Server-registration smoke test asserting the new tools register.
+
 ### [0.9.0] - 2026-08-21
 #### Changed
 - **[ARCH-CONVERGE-BE]** `check_peppol_participant_be` removed. Peppol participant lookup, plus service-endpoint lookup, DNS-only diagnostic, AS4 send, and 8 eDEC codelist tools now come from the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a BE-specific identifier adapter that normalizes a bare Belgian VAT number to the `0208:<digits>` Peppol scheme. Use `peppol_lookup_participant` instead of the removed tool.

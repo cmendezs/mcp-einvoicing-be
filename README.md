@@ -14,8 +14,6 @@
 
 `mcp-einvoicing-be` is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes tools for Belgian electronic invoicing. It covers the full Belgian e-invoicing ecosystem: **Peppol BIS Billing 3.0**, **UBL 2.1**, and the **Mercurius** network for public-sector invoicing. The server is part of the `mcp-einvoicing-*` family of country-specific servers, all built on top of [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), which provides the shared validation engine, UBL abstractions, and Peppol network utilities.
 
----
-
 ## Installation
 
 ### Requirements
@@ -43,18 +41,35 @@ cd mcp-einvoicing-be
 uv sync --all-extras
 ```
 
----
-
 ## Configuration
 
-Add the server to your MCP client configuration. For Claude Desktop, edit `claude_desktop_config.json`:
+### Environment variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `BCE_API_KEY` | API key for the Belgian BCE/KBO enterprise database | — |
+| `PEPPOL_ENV` | Peppol environment: `production` or `test` | `production` |
+| `PEPPOL_SML_URL` | Override the SML lookup URL | (auto) |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Local directory containing your own copy of the OpenPeppol eDEC Code Lists, required by the codelist tools (not bundled with this package; see `mcp-einvoicing-core` README) | — |
+| `EINVOICING_EN16931_CODELIST_DIR` | Local directory containing your own copy of the CEF "Digital Building Blocks" EN 16931 semantic code lists, required by the EN 16931 codelist tools (not bundled; see `mcp-einvoicing-core` README) | — |
+| `LOG_LEVEL` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+The EUSR/TSR reporting and MLS tools additionally require the `[xslt2]` extra (`pip install "mcp-einvoicing-be[xslt2]"`) for Schematron validation.
+
+## Claude Desktop integration
+
+To use this server with Claude, add this configuration to your `claude_desktop_config.json` file:
 
 ```json
 {
   "mcpServers": {
     "einvoicing-be": {
       "command": "uvx",
-      "args": ["mcp-einvoicing-be"]
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "your-bce-api-key",
+        "PEPPOL_ENV": "production"
+      }
     }
   }
 }
@@ -74,22 +89,57 @@ For a local development install:
 }
 ```
 
-### Environment variables
+## Cursor integration
 
-| Variable | Description | Default |
-|---|---|---|
-| `BCE_API_KEY` | API key for the Belgian BCE/KBO enterprise database | — |
-| `PEPPOL_ENV` | Peppol environment: `production` or `test` | `production` |
-| `PEPPOL_SML_URL` | Override the SML lookup URL | (auto) |
-| `EINVOICING_PEPPOL_CODELIST_DIR` | Local directory containing your own copy of the OpenPeppol eDEC Code Lists, required by the codelist tools (not bundled with this package; see `mcp-einvoicing-core` README) | — |
-| `EINVOICING_EN16931_CODELIST_DIR` | Local directory containing your own copy of the CEF "Digital Building Blocks" EN 16931 semantic code lists, required by the EN 16931 codelist tools (not bundled; see `mcp-einvoicing-core` README) | — |
-| `LOG_LEVEL` | Logging level: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+Cursor supports MCP servers via stdio. Add the configuration in:
+- **Global** (all projects): `~/.cursor/mcp.json`
+- **Project** (this repository only): `.cursor/mcp.json`
 
-The EUSR/TSR reporting and MLS tools additionally require the `[xslt2]` extra (`pip install "mcp-einvoicing-be[xslt2]"`) for Schematron validation.
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "your-bce-api-key",
+        "PEPPOL_ENV": "production"
+      }
+    }
+  }
+}
+```
 
----
+Reload the Cursor window (`Ctrl+Shift+P` then *Reload Window*) to apply the changes.
 
-## Available Tools
+## Kiro integration
+
+Kiro supports MCP servers via its dedicated configuration file. Two levels are available:
+- **Global** (all projects): `~/.kiro/settings/mcp.json`
+- **Workspace** (this repository only): `.kiro/settings/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "your-bce-api-key",
+        "PEPPOL_ENV": "production"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+The file is automatically reloaded on save. You can also open the config via the command palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) then *MCP*.
+
+> **Kiro security tip**: rather than writing secrets in plain text, use the syntax `"BCE_API_KEY": "${BCE_API_KEY}"`, Kiro resolves shell environment variables at startup.
+
+## Available tools
 
 ### `validate_invoice_be`
 
@@ -207,13 +257,9 @@ Returns the list of supported Belgian e-invoice document types (invoice, credit 
 
 No input parameters required.
 
----
-
 ## B2G via Mercurius
 
 Mercurius is the Belgian federal public-sector e-invoicing platform. It operates as a **Peppol network receiver**, not a separate API. B2G invoices are submitted through the standard Peppol network using the authority's participant ID in the `0208` scheme (KBO/BCE 10-digit enterprise number). The Access Point routes the invoice to Mercurius automatically. No Mercurius-specific submission endpoint or API key is required.
-
----
 
 ## Architecture
 
@@ -280,8 +326,6 @@ mcp-einvoicing-be/
 - UBL 2.1 invoice parsing for mandatory reception (Art. 13quater)
 - `customizationID` and `profileID` values specific to the Belgian Peppol corner
 
----
-
 ## Contributing
 
 Contributions are welcome. Please open an issue to discuss significant changes before submitting a pull request.
@@ -304,8 +348,6 @@ All pull requests must:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
----
-
 ## Other e-invoicing MCP servers
 
 | Country | Server |
@@ -321,14 +363,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 | 🇪🇸 Spain | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
 | 🇦🇪 United Arab Emirates | [mcp-einvoicing-ae](https://github.com/cmendezs/mcp-einvoicing-ae) |
 
----
-
 ## License
 
-This project is licensed under the **Apache 2.0** — see [LICENSE](LICENSE) for details.
-
----
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a full list of changes by version.
+This project is licensed under the **Apache 2.0** — see [LICENSE](LICENSE) for details. For the full version history, see [CHANGELOG.md](CHANGELOG.md).

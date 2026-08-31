@@ -14,8 +14,6 @@
 
 `mcp-einvoicing-be` est un serveur [MCP (Model Context Protocol)](https://modelcontextprotocol.io) qui expose des outils pour la facturation electronique en Belgique. Il couvre l'ensemble de l'ecosysteme belge de facturation electronique : **Peppol BIS Billing 3.0**, **UBL 2.1**, et le reseau **Mercurius** pour la facturation du secteur public. Ce serveur fait partie de la famille `mcp-einvoicing-*` de serveurs specifiques a chaque pays, tous construits sur [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), qui fournit le moteur de validation partage, les abstractions UBL et les utilitaires reseau Peppol.
 
----
-
 ## Installation
 
 ### Prérequis
@@ -43,18 +41,35 @@ cd mcp-einvoicing-be
 uv sync --all-extras
 ```
 
----
-
 ## Configuration
 
-Ajoutez le serveur à la configuration de votre client MCP. Pour Claude Desktop, modifiez `claude_desktop_config.json` :
+### Variables d'environnement
+
+| Variable | Description | Par défaut |
+|---|---|---|
+| `BCE_API_KEY` | Clé API pour la base de données d'entreprises belge BCE/KBO | - |
+| `PEPPOL_ENV` | Environnement Peppol : `production` ou `test` | `production` |
+| `PEPPOL_SML_URL` | Remplacer l'URL de recherche SML | (auto) |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes eDEC OpenPeppol, requis par les outils de listes de codes (non fourni avec ce paquet ; voir le README de `mcp-einvoicing-core`) | — |
+| `EINVOICING_EN16931_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes sémantiques EN 16931 du CEF « Digital Building Blocks », requis par les outils de listes de codes EN 16931 (non fourni ; voir le README de `mcp-einvoicing-core`) | — |
+| `LOG_LEVEL` | Niveau de journalisation : `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+Les outils de rapport EUSR/TSR et MLS nécessitent en plus l'extra `[xslt2]` (`pip install "mcp-einvoicing-be[xslt2]"`) pour la validation Schematron.
+
+## Intégration Claude Desktop
+
+Pour utiliser ce serveur avec Claude, ajoutez cette configuration dans votre fichier `claude_desktop_config.json` :
 
 ```json
 {
   "mcpServers": {
     "einvoicing-be": {
       "command": "uvx",
-      "args": ["mcp-einvoicing-be"]
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "votre-cle-api-bce",
+        "PEPPOL_ENV": "production"
+      }
     }
   }
 }
@@ -74,20 +89,55 @@ Pour une installation de développement locale :
 }
 ```
 
-### Variables d'environnement
+## Intégration Cursor
 
-| Variable | Description | Par défaut |
-|---|---|---|
-| `BCE_API_KEY` | Clé API pour la base de données d'entreprises belge BCE/KBO | - |
-| `PEPPOL_ENV` | Environnement Peppol : `production` ou `test` | `production` |
-| `PEPPOL_SML_URL` | Remplacer l'URL de recherche SML | (auto) |
-| `EINVOICING_PEPPOL_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes eDEC OpenPeppol, requis par les outils de listes de codes (non fourni avec ce paquet ; voir le README de `mcp-einvoicing-core`) | — |
-| `EINVOICING_EN16931_CODELIST_DIR` | Répertoire local contenant votre propre copie des listes de codes sémantiques EN 16931 du CEF « Digital Building Blocks », requis par les outils de listes de codes EN 16931 (non fourni ; voir le README de `mcp-einvoicing-core`) | — |
-| `LOG_LEVEL` | Niveau de journalisation : `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+Cursor prend en charge les serveurs MCP en stdio. Ajoutez la configuration dans :
+- **Global** (tous les projets) : `~/.cursor/mcp.json`
+- **Projet** (ce dépôt uniquement) : `.cursor/mcp.json`
 
-Les outils de rapport EUSR/TSR et MLS nécessitent en plus l'extra `[xslt2]` (`pip install "mcp-einvoicing-be[xslt2]"`) pour la validation Schematron.
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "votre-cle-api-bce",
+        "PEPPOL_ENV": "production"
+      }
+    }
+  }
+}
+```
 
----
+Rechargez la fenêtre Cursor (`Ctrl+Shift+P` puis *Reload Window*) pour prendre en compte les changements.
+
+## Intégration Kiro
+
+Kiro prend en charge les serveurs MCP via son fichier de configuration dédié. Deux niveaux sont disponibles :
+- **Global** (tous les projets) : `~/.kiro/settings/mcp.json`
+- **Workspace** (ce dépôt uniquement) : `.kiro/settings/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "votre-cle-api-bce",
+        "PEPPOL_ENV": "production"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+Le fichier est rechargé automatiquement à la sauvegarde. Vous pouvez également ouvrir la configuration via la palette de commandes (`Cmd+Shift+P` / `Ctrl+Shift+P`) puis *MCP*.
+
+> **Conseil sécurité Kiro** : plutôt que d'écrire les secrets en clair, utilisez la syntaxe `"BCE_API_KEY": "${BCE_API_KEY}"`, Kiro résout les variables d'environnement shell au démarrage.
 
 ## Outils disponibles
 
@@ -207,13 +257,9 @@ Retourne la liste des types de documents de facture electronique belges pris en 
 
 Aucun parametre d'entree requis.
 
----
-
 ## B2G via Mercurius
 
 Mercurius est la plateforme belge de facturation electronique pour le secteur public federal. Elle fonctionne comme un **recepteur du reseau Peppol**, et non comme une API separee. Les factures B2G sont soumises via le reseau Peppol standard en utilisant l'identifiant de participant de l'autorite dans le schema `0208` (numero d'entreprise KBO/BCE a 10 chiffres). Le Point d'Acces achemine automatiquement la facture vers Mercurius. Aucun point de soumission specifique a Mercurius ni cle API n'est requis.
-
----
 
 ## Architecture
 
@@ -280,8 +326,6 @@ mcp-einvoicing-be/
 - Analyse de factures UBL 2.1 pour la reception obligatoire (Art. 13quater)
 - Valeurs `customizationID` et `profileID` specifiques au coin belge de Peppol
 
----
-
 ## Contribuer
 
 Les contributions sont les bienvenues. Veuillez ouvrir un ticket (issue) pour discuter des changements significatifs avant de soumettre une pull request.
@@ -304,8 +348,6 @@ Toutes les pull requests doivent :
 
 Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour les directives complètes.
 
----
-
 ## Autres serveurs MCP de facturation électronique
 
 | Pays | Serveur |
@@ -321,14 +363,6 @@ Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour les directives complètes.
 | 🇪🇸 Espagne | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
 | 🇦🇪 Émirats arabes unis | [mcp-einvoicing-ae](https://github.com/cmendezs/mcp-einvoicing-ae) |
 
----
-
 ## Licence
 
-Ce projet est sous licence **Apache 2.0**. Consultez [LICENSE](LICENSE) pour plus de détails.
-
----
-
-## Journal des modifications
-
-Consultez [CHANGELOG.md](CHANGELOG.md) pour la liste complète des modifications par version.
+Ce projet est sous licence **Apache 2.0**. Consultez [LICENSE](LICENSE) pour plus de détails. Pour l'historique complet des versions, voir [CHANGELOG.md](CHANGELOG.md).

@@ -14,8 +14,6 @@
 
 `mcp-einvoicing-be` is een [MCP-server (Model Context Protocol)](https://modelcontextprotocol.io) die tools aanbiedt voor Belgische elektronische facturatie. Het dekt het volledige Belgische e-facturatie-ecosysteem: **Peppol BIS Billing 3.0**, **UBL 2.1**, en het **Mercurius**-netwerk voor facturatie aan de overheidssector. De server maakt deel uit van de `mcp-einvoicing-*`-familie van landspecifieke servers, allemaal gebouwd bovenop [`mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core), dat de gedeelde validatie-engine, UBL-abstracties en Peppol-netwerkutilities levert.
 
----
-
 ## Installatie
 
 ### Vereisten
@@ -43,18 +41,35 @@ cd mcp-einvoicing-be
 uv sync --all-extras
 ```
 
----
-
 ## Configuratie
 
-Voeg de server toe aan de configuratie van uw MCP-client. Voor Claude Desktop, bewerk `claude_desktop_config.json`:
+### Omgevingsvariabelen
+
+| Variabele | Beschrijving | Standaard |
+|---|---|---|
+| `BCE_API_KEY` | API-sleutel voor de Belgische BCE/KBO-ondernemingsdatabank | — |
+| `PEPPOL_ENV` | Peppol-omgeving: `production` of `test` | `production` |
+| `PEPPOL_SML_URL` | Overschrijf de SML-opzoek-URL | (auto) |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Lokale map met uw eigen kopie van de OpenPeppol eDEC-codelijsten, vereist door de codelijsttools (niet meegeleverd met dit pakket; zie de README van `mcp-einvoicing-core`) | — |
+| `EINVOICING_EN16931_CODELIST_DIR` | Lokale map met uw eigen kopie van de CEF "Digital Building Blocks" EN 16931-semantische codelijsten, vereist door de EN 16931-codelijsttools (niet meegeleverd; zie de README van `mcp-einvoicing-core`) | — |
+| `LOG_LEVEL` | Logboekniveau: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+
+De EUSR/TSR-rapportagetools en MLS-tools vereisen daarnaast de `[xslt2]`-extra (`pip install "mcp-einvoicing-be[xslt2]"`) voor Schematron-validatie.
+
+## Integratie met Claude Desktop
+
+Voeg de volgende configuratie toe aan uw `claude_desktop_config.json`-bestand:
 
 ```json
 {
   "mcpServers": {
     "einvoicing-be": {
       "command": "uvx",
-      "args": ["mcp-einvoicing-be"]
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "uw-bce-api-sleutel",
+        "PEPPOL_ENV": "production"
+      }
     }
   }
 }
@@ -74,20 +89,55 @@ Voor een lokale ontwikkelingsinstallatie:
 }
 ```
 
-### Omgevingsvariabelen
+## Integratie met Cursor
 
-| Variabele | Beschrijving | Standaard |
-|---|---|---|
-| `BCE_API_KEY` | API-sleutel voor de Belgische BCE/KBO-ondernemingsdatabank | — |
-| `PEPPOL_ENV` | Peppol-omgeving: `production` of `test` | `production` |
-| `PEPPOL_SML_URL` | Overschrijf de SML-opzoek-URL | (auto) |
-| `EINVOICING_PEPPOL_CODELIST_DIR` | Lokale map met uw eigen kopie van de OpenPeppol eDEC-codelijsten, vereist door de codelijsttools (niet meegeleverd met dit pakket; zie de README van `mcp-einvoicing-core`) | — |
-| `EINVOICING_EN16931_CODELIST_DIR` | Lokale map met uw eigen kopie van de CEF "Digital Building Blocks" EN 16931-semantische codelijsten, vereist door de EN 16931-codelijsttools (niet meegeleverd; zie de README van `mcp-einvoicing-core`) | — |
-| `LOG_LEVEL` | Logboekniveau: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+Cursor ondersteunt MCP-servers via stdio. Voeg de configuratie toe aan:
+- **Algemeen** (alle projecten): `~/.cursor/mcp.json`
+- **Project** (alleen deze repository): `.cursor/mcp.json`
 
-De EUSR/TSR-rapportagetools en MLS-tools vereisen daarnaast de `[xslt2]`-extra (`pip install "mcp-einvoicing-be[xslt2]"`) voor Schematron-validatie.
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "uw-bce-api-sleutel",
+        "PEPPOL_ENV": "production"
+      }
+    }
+  }
+}
+```
 
----
+Herlaad het Cursor-venster (`Ctrl+Shift+P` dan *Reload Window*) om de wijzigingen toe te passen.
+
+## Integratie met Kiro
+
+Kiro ondersteunt MCP-servers via een speciaal configuratiebestand. Twee niveaus zijn beschikbaar:
+- **Algemeen** (alle projecten): `~/.kiro/settings/mcp.json`
+- **Workspace** (alleen deze repository): `.kiro/settings/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "einvoicing-be": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-be"],
+      "env": {
+        "BCE_API_KEY": "uw-bce-api-sleutel",
+        "PEPPOL_ENV": "production"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
+```
+
+Het bestand wordt automatisch opnieuw geladen bij het opslaan. U kunt de configuratie ook openen via het opdrachtenpalet (`Cmd+Shift+P` / `Ctrl+Shift+P`) en dan *MCP*.
+
+> **Kiro-beveiligingstip**: gebruik in plaats van geheimen in platte tekst de syntax `"BCE_API_KEY": "${BCE_API_KEY}"`, Kiro lost shell-omgevingsvariabelen op bij het opstarten.
 
 ## Beschikbare tools
 
@@ -207,13 +257,9 @@ Retourneert de lijst van ondersteunde Belgische e-factuurdocumenttypen (factuur,
 
 Geen invoerparameters vereist.
 
----
-
 ## B2G via Mercurius
 
 Mercurius is het Belgische federale e-facturatieplatform voor de overheidssector. Het werkt als een **Peppol-netwerkontvanger**, niet als een aparte API. B2G-facturen worden ingediend via het standaard Peppol-netwerk met het deelnemers-ID van de overheid in het `0208`-schema (KBO/BCE 10-cijferig ondernemingsnummer). Het Access Point stuurt de factuur automatisch door naar Mercurius. Geen Mercurius-specifiek indienpunt of API-sleutel is vereist.
-
----
 
 ## Architectuur
 
@@ -280,8 +326,6 @@ mcp-einvoicing-be/
 - UBL 2.1 factuuranalyse voor verplichte ontvangst (Art. 13quater)
 - `customizationID`- en `profileID`-waarden specifiek voor de Belgische Peppol-hoek
 
----
-
 ## Bijdragen
 
 Bijdragen zijn welkom. Open een ticket (issue) om significante wijzigingen te bespreken voordat u een pull request indient.
@@ -304,8 +348,6 @@ Alle pull requests moeten:
 
 Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor volledige richtlijnen.
 
----
-
 ## Andere MCP-servers voor e-facturatie
 
 | Land | Server |
@@ -321,14 +363,6 @@ Zie [CONTRIBUTING.md](CONTRIBUTING.md) voor volledige richtlijnen.
 | 🇪🇸 Spanje | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
 | 🇦🇪 Verenigde Arabische Emiraten | [mcp-einvoicing-ae](https://github.com/cmendezs/mcp-einvoicing-ae) |
 
----
-
 ## Licentie
 
-Dit project valt onder de **Apache 2.0**-licentie. Zie [LICENSE](LICENSE) voor meer informatie.
-
----
-
-## Wijzigingslogboek
-
-Zie [CHANGELOG.md](CHANGELOG.md) voor een volledige lijst van wijzigingen per versie.
+Dit project valt onder de **Apache 2.0**-licentie. Zie [LICENSE](LICENSE) voor meer informatie. Zie [CHANGELOG.md](CHANGELOG.md) voor de volledige versiegeschiedenis.

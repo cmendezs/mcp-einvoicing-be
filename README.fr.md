@@ -358,6 +358,7 @@ Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour les directives complètes.
 | 🇫🇷 France | [mcp-facture-electronique-fr](https://github.com/cmendezs/mcp-facture-electronique-fr) |
 | 🇩🇪 Allemagne | [mcp-einvoicing-de](https://github.com/cmendezs/mcp-einvoicing-de) |
 | 🇮🇹 Italie | [mcp-fattura-elettronica-it](https://github.com/cmendezs/mcp-fattura-elettronica-it) |
+| 🇲🇽 Mexique | [mcp-cfdi-mx](https://github.com/cmendezs/mcp-cfdi-mx) |
 | 🇵🇱 Pologne | [mcp-ksef-pl](https://github.com/cmendezs/mcp-ksef-pl) |
 | 🇸🇬 Singapour | [mcp-invoicenow-sg](https://github.com/cmendezs/mcp-invoicenow-sg) |
 | 🇪🇸 Espagne | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |

@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "curl -fsSL -o src/styles/docs-theme.css https://raw.githubusercontent.com/cmendezs/mcp-einvoicing-core/main/docs/src/styles/docs-theme.css",
     "dev": "astro dev",
+    "prebuild": "curl -fsSL -o src/styles/docs-theme.css https://raw.githubusercontent.com/cmendezs/mcp-einvoicing-core/main/docs/src/styles/docs-theme.css",
     "build": "astro build",
     "preview": "astro preview"
   },

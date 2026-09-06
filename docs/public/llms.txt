@@ -1,0 +1,18 @@
+# mcp-einvoicing-be
+
+> MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)
+
+## Docs
+
+- [Overview](https://cmendezs.github.io/mcp-einvoicing-be/): what this server does and how to install it
+- [Installation](https://cmendezs.github.io/mcp-einvoicing-be/installation/): install via uvx
+- [Configuration](https://cmendezs.github.io/mcp-einvoicing-be/configuration/): required environment variables
+- [Tools](https://cmendezs.github.io/mcp-einvoicing-be/tools/): full MCP tool reference
+- [Standards](https://cmendezs.github.io/mcp-einvoicing-be/standards/): standards and profiles implemented
+- [Changelog](https://cmendezs.github.io/mcp-einvoicing-be/changelog/): version history
+
+## Links
+
+- [PyPI](https://pypi.org/project/mcp-einvoicing-be/)
+- [MCP registry](https://registry.modelcontextprotocol.io/v0/servers?search=io.github.cmendezs/mcp-einvoicing-be)
+- [GitHub](https://github.com/cmendezs/mcp-einvoicing-be)

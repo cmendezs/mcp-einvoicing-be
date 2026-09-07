@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.10.1] - 2026-09-07
+
+### Changed
+- **regulatory-update: Peppol BIS Billing 3.0 spec pin 3.0.20 → 3.0.21, closes `regulatory-update`
+  issue #5.** Released 2026-05-20, mandatory from 2026-08-17. Key changes: new optional Profile 02
+  "Billing with Response" (separate SMP registration); UBL/CII 1.3.16; rules
+  `PEPPOL-COMMON-R052`/`R053` move from warning to error for every profile; new warning-only rules
+  for Dutch identifiers. All of these live in the Peppol-specific overlay
+  (`PEPPOL-EN16931-UBL.sch`), which stays unbundled per the existing `BE-SC-11` licensing gap —
+  `validate_invoice_be` only runs the CEN base Schematron, so none of this is a behavior
+  regression. Documentation-only pin refresh (`context-library/countries/be.md` at the workspace
+  root); no code change.
+
+---
+
 ## [0.10.0] - 2026-08-24
 
 ### Changed

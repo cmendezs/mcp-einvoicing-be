@@ -4,12 +4,11 @@
 
 ## Docs
 
-- [Overview](https://cmendezs.github.io/mcp-einvoicing-be/): what this server does and how to install it
-- [Installation](https://cmendezs.github.io/mcp-einvoicing-be/installation/): install via uvx
-- [Configuration](https://cmendezs.github.io/mcp-einvoicing-be/configuration/): required environment variables
+- [Overview](https://cmendezs.github.io/mcp-einvoicing-be/): the full README — what this server does, installation, configuration, available tools
 - [Tools](https://cmendezs.github.io/mcp-einvoicing-be/tools/): full MCP tool reference
-- [Standards](https://cmendezs.github.io/mcp-einvoicing-be/standards/): standards and profiles implemented
 - [Changelog](https://cmendezs.github.io/mcp-einvoicing-be/changelog/): version history
+- [Contributing](https://cmendezs.github.io/mcp-einvoicing-be/contributing/): dev setup and PR checklist
+- [Security](https://cmendezs.github.io/mcp-einvoicing-be/security/): vulnerability disclosure policy
 
 ## Links
 

@@ -1,3 +1,3 @@
 """MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, Mercurius)."""
 
-__version__ = "0.1.1"
+__version__ = "0.10.1"

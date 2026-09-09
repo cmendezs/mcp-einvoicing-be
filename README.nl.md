@@ -326,6 +326,16 @@ mcp-einvoicing-be/
 - UBL 2.1 factuuranalyse voor verplichte ontvangst (Art. 13quater)
 - `customizationID`- en `profileID`-waarden specifiek voor de Belgische Peppol-hoek
 
+## Neutraliteit ten opzichte van leveranciers
+
+Deze server implementeert de standaard zelf: hij bouwt, valideert en ondertekent het document
+lokaal. Het is geen client voor een commercieel facturatieplatform, en uw
+ondertekeningssleutels en inloggegevens verlaten nooit uw eigen infrastructuur.
+
+Een Peppol-toegangspunt is vereist, maar elk geaccrediteerd toegangspunt spreekt hetzelfde
+AS4-profiel, dus het wisselen van leverancier is een configuratiewijziging, geen
+codewijziging.
+
 ## Bijdragen
 
 Bijdragen zijn welkom. Open een ticket (issue) om significante wijzigingen te bespreken voordat u een pull request indient.

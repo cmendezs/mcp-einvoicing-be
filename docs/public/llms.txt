@@ -1,6 +1,6 @@
 # mcp-einvoicing-be
 
-> MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)
+> MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius), vendor-neutral Peppol transport
 
 ## Docs
 

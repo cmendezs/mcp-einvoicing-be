@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "mcp-einvoicing-be"
 version = "0.10.1"
-description = "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)"
+description = "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius), vendor-neutral Peppol transport"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Cristian Mendez", email = "cmendezs@users.noreply.github.com" }]

@@ -326,6 +326,15 @@ mcp-einvoicing-be/
 - UBL 2.1 invoice parsing for mandatory reception (Art. 13quater)
 - `customizationID` and `profileID` values specific to the Belgian Peppol corner
 
+## Vendor neutrality
+
+This server implements the standard itself: it builds, validates, and signs the document
+locally. It is not a client for a commercial invoicing platform, and your signing keys and
+credentials never leave your own infrastructure.
+
+A Peppol access point is required, but any accredited access point speaks the same AS4
+profile, so switching providers is a configuration change, not a code change.
+
 ## Contributing
 
 Contributions are welcome. Please open an issue to discuss significant changes before submitting a pull request.

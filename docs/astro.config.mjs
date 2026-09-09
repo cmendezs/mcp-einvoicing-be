@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "mcp-einvoicing-be",
-      description: "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)",
+      description: "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius), vendor-neutral Peppol transport",
       customCss: ["./src/styles/docs-theme.css"],
       social: [
         { icon: "github", label: "GitHub", href: "https://github.com/cmendezs/mcp-einvoicing-be" },
@@ -29,7 +29,7 @@ export default defineConfig({
       plugins: [
         starlightLlmsTxt({
           projectName: "mcp-einvoicing-be",
-          description: "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius)",
+          description: "MCP server for Belgian electronic invoicing (Peppol BIS 3.0, UBL 2.1, PINT-EU, Mercurius), vendor-neutral Peppol transport",
           customSets: [
             {
               label: "Key links",

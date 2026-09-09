@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-06T10:11:24.331059+00:00",
+  "generated_at": "2026-09-09T15:34:05.537844+00:00",
   "pkg_name": "mcp-einvoicing-be",
-  "pkg_version": "0.10.0",
-  "core_version": "1.30.0",
+  "pkg_version": "0.10.1",
+  "core_version": "1.32.0",
   "core_version_compatible": true,
   "exit_code": 1,
   "total_blocking": 0,
-  "total_warnings": 10,
+  "total_warnings": 12,
   "checks": [
     {
       "check_id": "CHECK_1",
@@ -15,7 +15,7 @@
       "skipped": false,
       "skip_reason": "",
       "blocking_count": 0,
-      "warning_count": 10,
+      "warning_count": 12,
       "findings": [
         {
           "check_id": "CHECK_1",
@@ -72,6 +72,13 @@
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.base_server.BasePartyValidator",
           "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[MISSING]",
+          "severity": "WARNING",
+          "symbol": "mcp_einvoicing_core.base_server.BaseScopeInfo",
+          "message": "Core symbol 'BaseScopeInfo' is neither imported by mcp-einvoicing-be nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
         },
         {
           "check_id": "CHECK_1",
@@ -485,6 +492,13 @@
           "severity": "OK",
           "symbol": "mcp_einvoicing_core.exceptions.XSDValidationError",
           "message": "Intentionally overridden by mcp-einvoicing-be."
+        },
+        {
+          "check_id": "CHECK_1",
+          "tag": "[MISSING]",
+          "severity": "WARNING",
+          "symbol": "mcp_einvoicing_core.http_client.APIKeyConfig",
+          "message": "Core symbol 'APIKeyConfig' is neither imported by mcp-einvoicing-be nor marked as an intentional override. Add to _INTENTIONAL_OVERRIDES if this is deliberate."
         },
         {
           "check_id": "CHECK_1",
@@ -1231,7 +1245,7 @@
           "tag": "[OK]",
           "severity": "OK",
           "symbol": "mcp-einvoicing-core",
-          "message": "Installed: 1.30.0 | Declared range: >=1.20.0,<2.0.0 | Compatible: True"
+          "message": "Installed: 1.32.0 | Declared range: >=1.20.0,<2.0.0 | Compatible: True"
         }
       ]
     },
@@ -1310,6 +1324,24 @@
           "severity": "OK",
           "symbol": "*",
           "message": "No parallel implementations of core capabilities detected."
+        }
+      ]
+    },
+    {
+      "check_id": "CHECK_7",
+      "name": "Runtime resource paths",
+      "passed": true,
+      "skipped": false,
+      "skip_reason": "",
+      "blocking_count": 0,
+      "warning_count": 0,
+      "findings": [
+        {
+          "check_id": "CHECK_7",
+          "tag": "[OK]",
+          "severity": "OK",
+          "symbol": "mcp_einvoicing_be.specs.SPECS_DIR",
+          "message": "mcp_einvoicing_be.specs.SPECS_DIR resolves to /Users/christophe/Documents/Claude/Projects/mcp-einvoicing/mcp-einvoicing-be/src/mcp_einvoicing_be/specs, inside the installed package."
         }
       ]
     }

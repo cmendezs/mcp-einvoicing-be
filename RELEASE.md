@@ -58,7 +58,7 @@ mcp-publisher publish
 
 ### [0.8.0] - 2026-08-20
 #### Changed
-- **[CORE-EN16931-BASE-SCHEMATRON-1]** `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0`. Checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only fallback this package carried before v0.7.0 — but explicitly does not check the Peppol-specific overlay (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result carries an explicit warning that this is not a full Peppol BIS3 conformance check. See `context-library/decisions/peppol-schematron-artifact.md`.
+- **[CORE-EN16931-BASE-SCHEMATRON-1]** `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0`. Checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only fallback this package carried before v0.7.0 — but explicitly does not check the Peppol-specific overlay (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result carries an explicit warning that this is not a full Peppol BIS3 conformance check.
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.18.0` (was `>=1.15.0`) for the new `schematron_artifacts` module. Picks up the core v1.18.1 fix for the missing top-level `DueDate` in the UBL serializer/parser.
 
 #### Unchanged
@@ -66,7 +66,7 @@ mcp-publisher publish
 
 ### [0.7.0] - 2026-08-17
 #### Removed
-- **[BE-SC-11 follow-up]** `PEPPOL_BIS3_RULES` (hand-rolled Peppol BIS 3.0 base-rule approximation, ~10 of ~50+ real rules, no arithmetic checks) removed entirely rather than kept as the "fixed" version from v0.6.0 — a package-local partial duplication of rules identical across every Peppol-BIS3 country is a recurring bug source. See `context-library/roadmap-2026.md` **[CORE-PEPPOL-SCHEMATRON-1]**.
+- **[BE-SC-11 follow-up]** `PEPPOL_BIS3_RULES` (hand-rolled Peppol BIS 3.0 base-rule approximation, ~10 of ~50+ real rules, no arithmetic checks) removed entirely rather than kept as the "fixed" version from v0.6.0 — a package-local partial duplication of rules identical across every Peppol-BIS3 country is a recurring bug source (tracked as **[CORE-PEPPOL-SCHEMATRON-1]**).
 
 #### Changed
 - `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns an explicit unavailable result (`valid=False`, `metadata.engine="unavailable"`) instead of a partial pass/fail when no compiled Schematron is loaded.
@@ -82,7 +82,7 @@ mcp-publisher publish
 - Peppol BIS Billing 3.0 pin bumped 3.0.17 → 3.0.20 (2025 November release). Closes `regulatory-update` issue #4.
 
 #### Known gap (unchanged)
-- **[BE-SC-11]** remains open: no compiled, SVRL-producing Schematron XSLT is bundled. The 3.0.20 release bundle sourced for this refresh contained only the Schematron *sources* (`.sch`) plus a UBL-invoice-to-HTML viewer stylesheet (verified not to be a validator) — `validate_invoice_be` continues to run the (now-corrected) XPath fallback. Only `CEN-EN16931-UBL.sch` (EUPL 1.2 licensed) is bundled; `PEPPOL-EN16931-UBL.sch` and the viewer stylesheet were excluded pending redistribution-license confirmation. See `context-library/roadmap-2026.md` → `[CORE-PEPPOL-SCHEMATRON-1]`.
+- **[BE-SC-11]** remains open: no compiled, SVRL-producing Schematron XSLT is bundled. The 3.0.20 release bundle sourced for this refresh contained only the Schematron *sources* (`.sch`) plus a UBL-invoice-to-HTML viewer stylesheet (verified not to be a validator) — `validate_invoice_be` continues to run the (now-corrected) XPath fallback. Only `CEN-EN16931-UBL.sch` (EUPL 1.2 licensed) is bundled; `PEPPOL-EN16931-UBL.sch` and the viewer stylesheet were excluded pending redistribution-license confirmation (tracked as `[CORE-PEPPOL-SCHEMATRON-1]`).
 
 ### [0.5.0] - 2026-07-15
 #### Added

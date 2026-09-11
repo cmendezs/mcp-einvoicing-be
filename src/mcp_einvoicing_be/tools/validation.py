@@ -13,18 +13,16 @@ package-local overlay:
    (structural + arithmetic/totals), but NOT the Peppol-specific overlay
    (profile/process ID registration, EndpointID scheme, narrowed code lists).
    Results carry metadata.scope="en16931-base-only" and an explicit warning —
-   never presented as full Peppol BIS3 conformance. See
-   context-library/decisions/peppol-schematron-artifact.md for why the
-   overlay itself cannot ship yet.
+   never presented as full Peppol BIS3 conformance. The overlay itself
+   cannot ship yet (no confirmed OpenPeppol redistribution rights).
 3. Neither loaded (e.g. the [xslt2] extra is not installed): returns an
    explicit "unavailable" result (valid=False, an error explaining why)
    rather than a silent pass. v0.7.0 removed the package's own hand-rolled
    Peppol BIS 3.0 base-rule approximation (PEPPOL_BIS3_RULES) — it covered
    ~10 of the ~50+ real CEN/Peppol rules, no arithmetic checks, and had
    carried a rule-ID mislabeling bug (fixed in v0.6.0) before removal. Do not
-   reintroduce a package-local hand-rolled subset — see
-   context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1] and
-   [CORE-EN16931-BASE-SCHEMATRON-1].
+   reintroduce a package-local hand-rolled subset (tracked as
+   [CORE-PEPPOL-SCHEMATRON-1] and [CORE-EN16931-BASE-SCHEMATRON-1]).
 4. XPath overlay: evaluates hand-coded rules for the mercurius profile only
    (MERCURIUS_RULES — Mercurius-specific checks, not a Peppol/EN16931 base
    ruleset; see standards/mercurius.py).
@@ -39,8 +37,7 @@ remains genuinely open is the Peppol-specific overlay
 (PEPPOL-EN16931-UBL.sch): its license is unclear ("reproduced with
 permission from CEN", no redistribution terms stated, no repo-level LICENSE
 either — confirmed against the live OpenPEPPOL/peppol-bis-invoice-3 repo) and
-stays unbundled everywhere, per
-context-library/decisions/peppol-schematron-artifact.md. specs/peppol_bis_3/
+stays unbundled everywhere. specs/peppol_bis_3/
 here still only ships CEN-EN16931-UBL.sch as a reference/verification copy
 (now redundant with core's own compiled version, but left in place — no
 functional harm). ``_find_schematron_xslt`` continues to exclude any
@@ -96,7 +93,7 @@ _PEPPOL_VALIDATION_UNAVAILABLE = (
     "nor core's bundled EN16931-base Schematron). Install "
     "mcp-einvoicing-core[xslt2] to enable validation. See "
     "[GAP id=core.schematron.be_bundled_xslt] and "
-    "context-library/roadmap-2026.md [CORE-EN16931-BASE-SCHEMATRON-1]."
+    "[CORE-EN16931-BASE-SCHEMATRON-1]."
 )
 
 # Added to every peppol-bis-3/pint-eu result served by core's bundled EN16931
@@ -108,7 +105,7 @@ _EN16931_BASE_ONLY_SCOPE_WARNING = (
     "(structural + arithmetic/totals) only. Peppol-specific overlay rules "
     "(profile/process ID registration, EndpointID scheme, narrowed code "
     "lists) are NOT checked — this is not a full Peppol BIS3 conformance "
-    "result. See context-library/decisions/peppol-schematron-artifact.md."
+    "result (no confirmed OpenPeppol redistribution rights for the overlay)."
 )
 
 # Added to every mercurius-profile result: MERCURIUS_RULES only covers the
@@ -317,8 +314,8 @@ class BEDocumentValidator(BaseDocumentValidator):
         registration, EndpointID scheme, narrowed code lists) — the result's
         metadata.scope is "en16931-base-only", and a warning is included. This
         is not a full Peppol BIS3 conformance check; a document that passes
-        may still be rejected by a real Peppol Access Point. See
-        context-library/decisions/peppol-schematron-artifact.md for why.
+        may still be rejected by a real Peppol Access Point (no confirmed
+        OpenPeppol redistribution rights for the overlay rules).
         For 'mercurius': applies the Mercurius-specific overlay rules only
         (endpoint scheme, PO reference) — also not full EN16931/Peppol base
         compliance.

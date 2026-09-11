@@ -25,8 +25,8 @@ every entry checked). OpenPeppol publishes only uncompiled Schematron
 requires running the project's own `build.sh` (trang/Saxon toolchain), which
 is not reproduced here to avoid shipping an unverified compiled ruleset for
 a compliance-critical validator. `download_peppol_bis3()` below is disabled
-pending a verified source for the compiled artifact — see BE-SC-11 in
-`context-library/roadmap-2026.md`. `tools/validation.py::_find_schematron_xslt`
+pending a verified source for the compiled artifact (tracked as BE-SC-11).
+`tools/validation.py::_find_schematron_xslt`
 already fails loudly (`allow_fallback=False`) rather than silently degrading.
 """
 
@@ -64,7 +64,7 @@ def download_peppol_bis3() -> None:
         "Peppol BIS 3.0 Schematron download is disabled: no verified source "
         "for a compiled XSLT artifact is currently known. "
         "See [GAP id=core.schematron.be_bundled_xslt] in this module's docstring "
-        "and BE-SC-11 in context-library/roadmap-2026.md. "
+        "(tracked as BE-SC-11). "
         "mcp_einvoicing_be.tools.validation falls back to hand-coded XPath rules "
         "until this is resolved."
     )

@@ -18,8 +18,8 @@ Mercurius-specific overlay (MER-002/003/004), which is genuinely BE-local and
 not duplicated in any other package. Base EN16931/Peppol BIS 3.0 compliance
 is NOT checked by the mercurius profile; tools/validation.py adds an explicit
 warning to every mercurius result saying so, rather than implying full
-coverage. Once context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]
-ships a shared base validator, this overlay should layer on top of that
+coverage. Once [CORE-PEPPOL-SCHEMATRON-1] ships a shared base validator,
+this overlay should layer on top of that
 instead of standing alone.
 """
 

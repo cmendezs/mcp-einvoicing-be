@@ -213,8 +213,8 @@ class TestReducedRateInvoice:
 
 
 class TestEvaluateRule:
-    """v0.7.0: PEPPOL_BIS3_RULES was removed (see standards/peppol_bis_3.py
-    and roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1]), so validate_invoice_be's
+    """v0.7.0: PEPPOL_BIS3_RULES was removed (see standards/peppol_bis_3.py;
+    tracked as [CORE-PEPPOL-SCHEMATRON-1]), so validate_invoice_be's
     peppol-bis-3 profile no longer runs _evaluate_rule at all — it reports an
     explicit "unavailable" result instead (see test_validation.py). This class
     now exercises _evaluate_rule directly against synthetic rule dicts to keep

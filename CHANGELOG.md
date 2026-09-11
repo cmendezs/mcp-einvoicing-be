@@ -21,8 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for Dutch identifiers. All of these live in the Peppol-specific overlay
   (`PEPPOL-EN16931-UBL.sch`), which stays unbundled per the existing `BE-SC-11` licensing gap —
   `validate_invoice_be` only runs the CEN base Schematron, so none of this is a behavior
-  regression. Documentation-only pin refresh (`context-library/countries/be.md` at the workspace
-  root); no code change.
+  regression. Documentation-only pin refresh; no code change.
 
 ---
 
@@ -46,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2026-08-21
 
 ### Changed
-- `check_peppol_participant_be` removed. Peppol participant lookup (and the rest of the Peppol network surface: service-endpoint lookup, DNS-only diagnostic, AS4 send, and the eDEC codelist tools) now comes from the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a BE-specific identifier adapter (`_be_id_adapter`) that normalizes a bare Belgian VAT number to the `0208:<digits>` Peppol scheme (KBO/BCE). Use `peppol_lookup_participant` instead of the removed tool; behavior and response shape are unchanged for that use case, but the tool now also exposes `peppol_get_service_endpoint`, `resolve_peppol_dns`, `peppol_send`, and 8 eDEC codelist tools that were not previously available in this package. See `context-library/roadmap-2026.md` **[ARCH-CONVERGE-BE]**.
+- `check_peppol_participant_be` removed. Peppol participant lookup (and the rest of the Peppol network surface: service-endpoint lookup, DNS-only diagnostic, AS4 send, and the eDEC codelist tools) now comes from the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a BE-specific identifier adapter (`_be_id_adapter`) that normalizes a bare Belgian VAT number to the `0208:<digits>` Peppol scheme (KBO/BCE). Use `peppol_lookup_participant` instead of the removed tool; behavior and response shape are unchanged for that use case, but the tool now also exposes `peppol_get_service_endpoint`, `resolve_peppol_dns`, `peppol_send`, and 8 eDEC codelist tools that were not previously available in this package (tracked as **[ARCH-CONVERGE-BE]**).
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.19.0` (was `>=1.18.0`), required for `register_peppol_tools`.
 
 ---
@@ -54,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] — 2026-08-20
 
 ### Changed
-- `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0` (**[CORE-EN16931-BASE-SCHEMATRON-1]**). This checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only XPath fallback this package carried before v0.7.0 — but explicitly does **not** check the Peppol-specific overlay rules (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result now carries an explicit warning that this is not a full Peppol BIS3 conformance check. See `context-library/decisions/peppol-schematron-artifact.md` for why the overlay itself still cannot ship (no confirmed OpenPeppol redistribution rights).
+- `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns real validation results (`metadata.engine="schematron-xslt"`, `metadata.scope="en16931-base-only"`) instead of the `"unavailable"` result introduced in v0.7.0, using the CEN EN16931 base Schematron newly bundled in `mcp-einvoicing-core>=1.18.0` (**[CORE-EN16931-BASE-SCHEMATRON-1]**). This checks the ~50 CEN `BR-*` structural/arithmetic rules — a real improvement over the presence-only XPath fallback this package carried before v0.7.0 — but explicitly does **not** check the Peppol-specific overlay rules (profile/process ID registration, `EndpointID` scheme, narrowed code lists). Every result now carries an explicit warning that this is not a full Peppol BIS3 conformance check. The overlay itself still cannot ship (no confirmed OpenPeppol redistribution rights).
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.18.0` (was `>=1.15.0`) for the new `schematron_artifacts` module.
 
 ### Unchanged
@@ -65,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] — 2026-08-17
 
 ### Removed
-- `PEPPOL_BIS3_RULES` (the package's hand-rolled Peppol BIS 3.0 base-rule approximation) removed entirely, rather than kept as the "fixed" version shipped in v0.6.0. It covered only ~10 of the ~50+ real CEN/Peppol rules (no arithmetic/totals checks) and had just been found to carry a rule-ID mislabeling bug — a package-local partial duplication of rules that are identical across every Peppol-BIS3-consuming country is a recurring source of exactly this class of bug. See `context-library/roadmap-2026.md` **[CORE-PEPPOL-SCHEMATRON-1]**.
+- `PEPPOL_BIS3_RULES` (the package's hand-rolled Peppol BIS 3.0 base-rule approximation) removed entirely, rather than kept as the "fixed" version shipped in v0.6.0. It covered only ~10 of the ~50+ real CEN/Peppol rules (no arithmetic/totals checks) and had just been found to carry a rule-ID mislabeling bug — a package-local partial duplication of rules that are identical across every Peppol-BIS3-consuming country is a recurring source of exactly this class of bug (tracked as **[CORE-PEPPOL-SCHEMATRON-1]**).
 
 ### Changed
 - `validate_invoice_be(profile="peppol-bis-3"|"pint-eu")` now returns an explicit unavailable result (`valid=False`, an error explaining why, `metadata.engine="unavailable"`) when no real compiled Schematron is loaded, instead of a silently-partial pass/fail. A false "valid" from an incomplete rule set is worse than a clear "cannot validate" signal for a compliance tool.
@@ -88,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added optional `xslt2` extra (`mcp-einvoicing-core[xslt2]`) for future Saxon-HE-backed Schematron validation.
 
 ### Known gap (unchanged)
-- `[GAP id=core.schematron.be_bundled_xslt]` remains open: no compiled, SVRL-producing Schematron XSLT is bundled. The 3.0.20 release bundle sourced for this refresh contains only the Schematron sources (`.sch`) plus a UBL-to-HTML viewer stylesheet (verified not to be a validator) — `validate_invoice_be` continues to run the XPath fallback above. See `context-library/countries/be.md` for detail.
+- `[GAP id=core.schematron.be_bundled_xslt]` remains open: no compiled, SVRL-producing Schematron XSLT is bundled. The 3.0.20 release bundle sourced for this refresh contains only the Schematron sources (`.sch`) plus a UBL-to-HTML viewer stylesheet (verified not to be a validator) — `validate_invoice_be` continues to run the XPath fallback above.
 
 ---
 

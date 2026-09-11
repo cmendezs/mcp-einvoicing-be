@@ -17,7 +17,7 @@ PROFILE_IDS: dict[str, str] = {
 # real bug (every rule ID from "BR-02" onward was paired with the wrong rule
 # content, fixed in v0.6.0) and, more fundamentally, a package-local partial
 # duplication of rules that are identical across every Peppol-BIS3-consuming
-# country — see context-library/roadmap-2026.md [CORE-PEPPOL-SCHEMATRON-1].
+# country (tracked as [CORE-PEPPOL-SCHEMATRON-1]).
 # Rather than keep maintaining an incomplete, easy-to-mismatch approximation
 # per country package, mcp_einvoicing_be.tools.validation now reports
 # "unavailable" for peppol-bis-3/pint-eu when no real compiled Schematron is

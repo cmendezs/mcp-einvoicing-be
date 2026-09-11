@@ -18,7 +18,7 @@ from mcp_einvoicing_be.utils.helpers import normalize_vat_be
 
 # [GAP id=BE-KBO-ENDPOINT] Base URL and response-field mapping (legalForm,
 # activities, startDate) are [Unverified] against an authoritative BCE/KBO API
-# document — see context-library/countries/be.md.
+# document.
 _BCE_API_BASE = "https://api.kbo-bce.be/v1"
 
 

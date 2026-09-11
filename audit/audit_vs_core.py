@@ -343,7 +343,7 @@ _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
 # shared core plugin (mcp_einvoicing_core.peppol.tools.register_peppol_tools,
 # mounted in server.py under the "peppol" plugin name), not a BE-local
 # function, so they are intentionally absent from _REQUIRED_TOOL_CATEGORIES.
-# See ARCH-CONVERGE-BE in roadmap-2026.md.
+# (ARCH-CONVERGE-BE).
 
 
 def _collect_registered_tools() -> set[str]:

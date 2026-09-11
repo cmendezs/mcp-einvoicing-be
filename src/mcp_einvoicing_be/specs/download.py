@@ -4,7 +4,7 @@ Belgium adopts Peppol BIS Billing 3.0 as-is (Royal Decree of 8 July 2025,
 Art. 13ter, MB/BS N. 157, 14 July 2025).  There are no Belgian-specific XSD or
 Schematron files.  The normative artefacts are published by OpenPeppol and OASIS.
 
-Usage (from the workspace root):
+Usage (from this repo's own root):
     uv run python src/mcp_einvoicing_be/specs/download.py
 
 Artefacts downloaded:

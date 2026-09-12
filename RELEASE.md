@@ -41,6 +41,10 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.10.2] - 2026-09-12
+#### Changed
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.34.1` (was `>=1.20.0`). This package's own CI now runs `CHECK_PUBLIC_HYGIENE`, the pre-publish audit check that blocks accidental citations of the private orchestration repo.
+
 ### [0.10.0] - 2026-08-24
 #### Changed
 - **[core v1.20.0]** `peppol_send` now emits a real `wsse:Security` message signature. Core's AS4 transport client's `_apply_message_signature` previously computed a signature and discarded it, sending unsigned outbound messages. Wire-level behavior change, not independently validated against a live sandbox Peppol AP at time of publish — the signing code is shared core logic, not BE-specific, so no per-package sandbox gate was required (2026-08-24 user decision).

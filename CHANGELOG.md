@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.35.0`, which bundles the CEN EN 16931 base Schematron 1.3.17. `BR-CO-25` is no longer emitted by the base rules (retired upstream), so the validation round-trip test now expects `BR-61` only.
+
 ---
 
 ## [0.10.2] - 2026-09-12

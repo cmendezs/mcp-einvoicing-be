@@ -110,21 +110,21 @@ async def test_default_profile_is_peppol(invalid_xml: str) -> None:
 async def test_generate_validate_roundtrip_peppol_bis_3_finds_real_gaps() -> None:
     """v0.8.0 [CORE-EN16931-BASE-SCHEMATRON-1]: with real CEN EN16931 base
     validation now running (instead of the old unconditional "unavailable"),
-    the minimal fixture invoice's real gaps surface: no payment account
-    identifier for the default SEPA credit-transfer payment means (BR-61),
-    and no PayableAmount due-date signal reaching the wire format (BR-CO-25 —
-    a known separate BE serializer bug where PaymentDueDate is emitted in
-    the wrong place; see the payment-bearing test below and the tracked
-    follow-up). This is a real improvement over both the old hand-rolled
-    approximation (which never checked either rule) and the old unconditional
-    "unavailable" (which caught neither)."""
+    the minimal fixture invoice's real gap surfaces: no payment account
+    identifier for the default SEPA credit-transfer payment means (BR-61).
+    With CEN 1.3.17 (core>=1.35.0) BR-CO-25 is no longer part of the base
+    rules (retired upstream in 1.3.16), so only BR-61 remains. This is a real
+    improvement over both the old hand-rolled approximation (which never
+    checked it) and the old unconditional "unavailable" (which caught
+    nothing)."""
     xml = _generated_invoice_xml()
     result = await _val.validate_invoice_be(xml=xml, profile="peppol-bis-3")
     assert result["valid"] is False
     assert result["engine"] == "schematron-xslt"
     assert result["scope"] == "en16931-base-only"
     rule_ids = {str(e).split(":")[0] for e in result["errors"]}
-    assert "BR-CO-25" in rule_ids
+    assert "BR-61" in rule_ids
+    assert "BR-CO-25" not in rule_ids
 
 
 @pytest.mark.asyncio

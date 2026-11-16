@@ -41,6 +41,11 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.10.3] - 2026-11-17
+#### Changed
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.35.0`, which bundles the CEN EN 16931 base Schematron 1.3.17. `BR-CO-25` is no longer emitted by the base rules (retired upstream in 1.3.16), so the validation round-trip test now expects `BR-61` only.
+- Peppol BIS 3.0.22 (2026-10-28 hotfix) reviewed: it changes only a Peppol overlay rule on invoice type codes 384/326/389, which this package neither bundles nor references.
+
 ### [0.10.2] - 2026-09-12
 #### Changed
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.34.1` (was `>=1.20.0`). This package's own CI now runs `CHECK_PUBLIC_HYGIENE`, the pre-publish audit check that blocks accidental citations of the private orchestration repo.

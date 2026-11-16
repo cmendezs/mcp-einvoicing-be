@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- `specs/peppol_bis_3/CEN-EN16931-UBL.sch`, an unused reference copy of the CEN EN 16931 UBL Schematron (version 1.3.15) that shipped inside the wheel. Nothing in the package read it, and its rule set (including the retired `BR-CO-25` and `BR-AF/AG-*`) no longer matches the base rules the validator actually runs, which come from `mcp-einvoicing-core`. The folder is kept empty so a deployer can still place a properly licensed compiled stylesheet there.
+
 ### Changed
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.35.0`, which bundles the CEN EN 16931 base Schematron 1.3.17. `BR-CO-25` is no longer emitted by the base rules (retired upstream), so the validation round-trip test now expects `BR-61` only.
 

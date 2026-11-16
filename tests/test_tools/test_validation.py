@@ -166,3 +166,12 @@ async def test_metadata_engine_schematron_xslt_en16931_base_only_scope() -> None
     assert result["engine"] == "schematron-xslt"
     assert result["scope"] == "en16931-base-only"
     assert any("EN16931-BASE-ONLY-SCOPE" in str(w) for w in result["warnings"])
+
+
+def test_wheel_ships_no_unused_schematron_source() -> None:
+    """v0.10.4: the stale CEN 1.3.15 `.sch` reference copy was removed; the base rules come
+    from mcp-einvoicing-core, so `specs/peppol_bis_3/` must not ship a Schematron source."""
+    from mcp_einvoicing_be.specs import PEPPOL_BIS3_DIR
+
+    assert PEPPOL_BIS3_DIR.is_dir()
+    assert list(PEPPOL_BIS3_DIR.rglob("*.sch")) == []

@@ -38,9 +38,11 @@ remains genuinely open is the Peppol-specific overlay
 permission from CEN", no redistribution terms stated, no repo-level LICENSE
 either — confirmed against the live OpenPEPPOL/peppol-bis-invoice-3 repo) and
 stays unbundled everywhere. specs/peppol_bis_3/
-here still only ships CEN-EN16931-UBL.sch as a reference/verification copy
-(now redundant with core's own compiled version, but left in place — no
-functional harm). ``_find_schematron_xslt`` continues to exclude any
+here ships no Schematron source: the former reference copy of
+CEN-EN16931-UBL.sch (1.3.15) was removed in v0.10.4 because core's compiled
+base rules supersede it and nothing read it. The folder is kept (empty) so a
+deployer can drop a properly licensed compiled stylesheet there.
+``_find_schematron_xslt`` continues to exclude any
 stylesheet-ubl.xslt found under specs/peppol_bis_3/ by name as a defensive
 guard (verified 2026-08-17 to be a UBL-invoice-to-HTML viewer, not a
 Schematron/SVRL validator), so it is never mistaken for a compiled Schematron

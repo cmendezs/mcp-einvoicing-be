@@ -41,6 +41,10 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.10.4] - 2026-11-17
+#### Removed
+- `specs/peppol_bis_3/CEN-EN16931-UBL.sch`: an unused reference copy of the CEN EN 16931 UBL Schematron (1.3.15) that shipped in the wheel. Nothing read it, and its rules no longer match the base rules the validator runs (from `mcp-einvoicing-core`). The folder is kept empty for a deployer-supplied compiled stylesheet.
+
 ### [0.10.3] - 2026-11-17
 #### Changed
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.35.0`, which bundles the CEN EN 16931 base Schematron 1.3.17. `BR-CO-25` is no longer emitted by the base rules (retired upstream in 1.3.16), so the validation round-trip test now expects `BR-61` only.
